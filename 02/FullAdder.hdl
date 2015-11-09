@@ -13,5 +13,16 @@ CHIP FullAdder {
         carry;   // Left bit of a + b + c
 
     PARTS:
-    // Put you code here:
+    /* First go, 22 nands
+    Xor(a=a, b=b, out=aXorB);
+    Xor(a=aXorB, b=c, out=sum);
+    Or(a=a, b=b, out=aOrB);
+    And(a=a, b=b, out=aAndB);
+    And(a=aOrB, b=c, out=aOrBAndC);
+    Or(a=aAndB, b=aOrBAndC, out=carry);
+    */
+    /* Turns out the easy way actually uses less nands :P 21. */
+    HalfAdder(a=a, b=b, sum=sum0, carry=carry0);
+    HalfAdder(a=sum0, b=c, sum=sum, carry=carry1);
+    Or(a=carry0, b=carry1, out=carry);
 }
