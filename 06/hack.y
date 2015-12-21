@@ -7,8 +7,12 @@ int yylex();
 void yyerror(char* s);
 
 extern int line_no;
+
+#define LINE_SIZE 17
+
+#define MAX_ADDRESS 100000
+char* rom[MAX_ADDRESS];
 int cur_address = 0;
-int label_no = 0;
 
 typedef struct {
   char* label;
@@ -17,6 +21,11 @@ typedef struct {
 
 #define MAX_LABELS 20000
 Label labels[MAX_LABELS];
+int label_no = 0;
+
+#define MAX_LOOKBACKS 20000
+Label lookbacks[MAX_LOOKBACKS];
+int lookback_no = 0;
 
 // return address of label or -1 if it doesn't exist
 int get_label(char* label) {
@@ -53,6 +62,82 @@ void clear_labels() {
   label_no = 0;
 }
 
+// Takes ownership of instruction.
+void add_instruction(char* instruction) {
+  if (cur_address >= MAX_ADDRESS) {
+    yyerror("Max address reached.");
+  }
+  rom[cur_address] = instruction;
+}
+
+void print_program() {
+  int a = 0;
+  for (; a < cur_address; ++a) {
+    puts(rom[a]);
+  }
+}
+
+void clear_rom() {
+  int a = 0;
+  for (; a < cur_address; ++a) {
+    if (rom[a]) {
+      free(rom[a]);
+    }
+  }
+}
+
+char* create_a(int address) {
+  char* new_line = (char*)malloc((sizeof(char)) * LINE_SIZE);
+  snprintf(new_line, LINE_SIZE, "%016d", address);
+  return new_line;
+}
+
+char* create_c(char* comp, char* dest, char* jump) {
+  if (!comp) yyerror("MISSING COMP");
+  if (!dest) dest = "000";
+  if (!jump) jump = "000";
+  char* new_line = (char*)malloc((sizeof(char)) * LINE_SIZE);
+  snprintf(new_line, LINE_SIZE, "111%s%s%s", comp, dest, jump);
+  return new_line;
+}
+
+void add_lookback(char* label, int address) {
+  lookbacks[lookback_no].label = strdup(label);
+  lookbacks[lookback_no].address = address;
+  ++lookback_no;
+}
+
+void fix_lookbacks() {
+  int next_free = 16;  // TODO: need to check for overflowing the RAMs bounds
+  int l = 0;
+  for(; l < lookback_no; ++l) {
+    int address = get_label(lookbacks[l].label);
+    if (address >= 0) {
+      // if the label exists, use it
+      // rom takes ownership
+      rom[lookbacks[l].address] = create_a(address);
+    } else {
+      // if the label doesn't exist, create it
+      address = next_free;
+      ++next_free;
+
+      add_label(lookbacks[l].label, address);
+
+      // rom takes ownership
+      rom[lookbacks[l].address] = create_a(address);
+    }
+  }
+}
+
+void clear_lookbacks() {
+  int l = 0;
+  for (; l < lookback_no; ++l) {
+    if (lookbacks[lookback_no].label) {
+      free(lookbacks[lookback_no].label);
+    }
+  }
+}
+
 %}
 
 %union {
@@ -75,7 +160,11 @@ hack:
             for (; l < label_no; ++l) {
               printf(" %d: %s = %d\n", l, labels[l].label, labels[l].address);
             }
+            fix_lookbacks();
+            print_program();
             clear_labels();
+            clear_lookbacks();
+            clear_rom();
           }
     ;
 lines:
@@ -88,13 +177,13 @@ line:
     | label
     ;
 c_command:
-         COMP ';' JUMP { printf("111%s000%s\n", $1, $3); ++cur_address; }
-         | DEST '=' COMP { printf("111%s%s000\n", $3, $1); ++cur_address; }
-         | DEST '=' COMP ';' JUMP { printf("111%s%s%s\n", $3, $1, $5); ++cur_address; }
+         COMP ';' JUMP { rom[cur_address] = create_c($1, 0, $3); ++cur_address; }
+         | DEST '=' COMP { rom[cur_address] = create_c($3, $1, 0); ++cur_address; }
+         | DEST '=' COMP ';' JUMP { rom[cur_address] = create_c($3, $1, $5); ++cur_address; }
          ;
 a_command:
-         '@' INT { printf("%016d\n", $2); ++cur_address; }
-         | '@' SYMBOL { printf("found a symbol %s on line %d that we can't do anything with yet.\n", $2, line_no); }
+         '@' INT { rom[cur_address] = create_a($2); ++cur_address; }
+         | '@' SYMBOL { rom[cur_address] = NULL; add_lookback($2, cur_address); ++cur_address; }
          ;
 label:
      '(' SYMBOL ')' { if (get_label($2) >= 0) {
