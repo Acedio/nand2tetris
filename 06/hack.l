@@ -6,7 +6,7 @@
 int line_no = 1;
 %}
 
-%x AT_STATE
+%s AT_STATE
 
 SYMBOL_LEAD [A-Za-z_.$:]
 SYMBOL_CHAR [A-Za-z_.$:0-9]
@@ -19,29 +19,29 @@ SYMBOL_CHAR [A-Za-z_.$:0-9]
 <AT_STATE>[0-9]+ { BEGIN(INITIAL); yylval.num = atoi(yytext); return INT; }
 =|;|\(|\) { return yytext[0]; }
 
-SP     { yylval.num = 0; return INT; }
-LCL    { yylval.num = 1; return INT; }
-ARG    { yylval.num = 2; return INT; }
-THIS   { yylval.num = 3; return INT; }
-THAT   { yylval.num = 4; return INT; }
-R0     { yylval.num = 0; return INT; }
-R1     { yylval.num = 1; return INT; }
-R2     { yylval.num = 2; return INT; }
-R3     { yylval.num = 3; return INT; }
-R4     { yylval.num = 4; return INT; }
-R5     { yylval.num = 5; return INT; }
-R6     { yylval.num = 6; return INT; }
-R7     { yylval.num = 7; return INT; }
-R8     { yylval.num = 8; return INT; }
-R9     { yylval.num = 9; return INT; }
-R10    { yylval.num = 10; return INT; }
-R11    { yylval.num = 11; return INT; }
-R12    { yylval.num = 12; return INT; }
-R13    { yylval.num = 13; return INT; }
-R14    { yylval.num = 14; return INT; }
-R15    { yylval.num = 15; return INT; }
-SCREEN { yylval.num = 16384; return INT; }
-KBD    { yylval.num = 24576; return INT; }
+SP     { BEGIN(INITIAL); yylval.num = 0; return INT; }
+LCL    { BEGIN(INITIAL); yylval.num = 1; return INT; }
+ARG    { BEGIN(INITIAL); yylval.num = 2; return INT; }
+THIS   { BEGIN(INITIAL); yylval.num = 3; return INT; }
+THAT   { BEGIN(INITIAL); yylval.num = 4; return INT; }
+R0     { BEGIN(INITIAL); yylval.num = 0; return INT; }
+R1     { BEGIN(INITIAL); yylval.num = 1; return INT; }
+R2     { BEGIN(INITIAL); yylval.num = 2; return INT; }
+R3     { BEGIN(INITIAL); yylval.num = 3; return INT; }
+R4     { BEGIN(INITIAL); yylval.num = 4; return INT; }
+R5     { BEGIN(INITIAL); yylval.num = 5; return INT; }
+R6     { BEGIN(INITIAL); yylval.num = 6; return INT; }
+R7     { BEGIN(INITIAL); yylval.num = 7; return INT; }
+R8     { BEGIN(INITIAL); yylval.num = 8; return INT; }
+R9     { BEGIN(INITIAL); yylval.num = 9; return INT; }
+R10    { BEGIN(INITIAL); yylval.num = 10; return INT; }
+R11    { BEGIN(INITIAL); yylval.num = 11; return INT; }
+R12    { BEGIN(INITIAL); yylval.num = 12; return INT; }
+R13    { BEGIN(INITIAL); yylval.num = 13; return INT; }
+R14    { BEGIN(INITIAL); yylval.num = 14; return INT; }
+R15    { BEGIN(INITIAL); yylval.num = 15; return INT; }
+SCREEN { BEGIN(INITIAL); yylval.num = 16384; return INT; }
+KBD    { BEGIN(INITIAL); yylval.num = 24576; return INT; }
 
 0    { yylval.bin = "0101010"; return COMP; }
 1    { yylval.bin = "0111111"; return COMP; }
