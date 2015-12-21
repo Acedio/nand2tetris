@@ -155,10 +155,10 @@ void clear_lookbacks() {
 %%
 
 hack:
-    lines { printf("Labels:\n");
+    lines { fprintf(stderr, "Labels:\n");
             int l = 0;
             for (; l < label_no; ++l) {
-              printf(" %d: %s = %d\n", l, labels[l].label, labels[l].address);
+              fprintf(stderr, " %d: %s = %d\n", l, labels[l].label, labels[l].address);
             }
             fix_lookbacks();
             print_program();

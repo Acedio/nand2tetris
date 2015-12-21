@@ -12,7 +12,7 @@ SYMBOL_LEAD [A-Za-z_.$:]
 SYMBOL_CHAR [A-Za-z_.$:0-9]
 %%
 \/\/.*/\n ;
-[ \t] ;
+[ \r\t] ;
 \n { ++line_no; }
 
 @ { BEGIN(AT_STATE); return yytext[0]; }
