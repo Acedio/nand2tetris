@@ -88,7 +88,12 @@ void clear_rom() {
 
 char* create_a(int address) {
   char* new_line = (char*)malloc((sizeof(char)) * LINE_SIZE);
-  snprintf(new_line, LINE_SIZE, "%016d", address);
+  new_line[16] = 0;
+  int bit = 15;
+  for (; bit >= 0; --bit) {
+    new_line[bit] = (address & 1) ? '1' : '0';
+    address >>= 1;
+  }
   return new_line;
 }
 
