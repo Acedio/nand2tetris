@@ -1,0 +1,6 @@
+[package]
+name = "vm"
+version = "0.1.0"
+authors = ["Josh Simmons <josh.simmons@gmail.com>"]
+
+[dependencies]
