@@ -29,7 +29,8 @@ fn unary_op(op : &str) {
     M={}", op));
 }
 
-fn cmp_op(op : &str) {
+// line_no to make a unique label
+fn cmp_op(op : &str, line_no: usize) {
     clean_print(format!(r"
     @0
     AM=M-1 // get and update SP at the same time
@@ -37,11 +38,13 @@ fn cmp_op(op : &str) {
     A=A-1
     D=M-D  // comparing M (x) vs D (y)
     M=-1   // true by default
-    @iftrue
+    @iftrue.{}
     D;{}
-    M=0    // false if no jump
-    iftrue:
-    ", op));
+    @0     // have to get SP again now
+    A=M-1
+    M=0    // false if we didn't jump
+    (iftrue.{})
+    ", line_no, op, line_no));
 }
 
 fn push_op(segment: &str, index: u16) {
@@ -58,7 +61,7 @@ fn push_op(segment: &str, index: u16) {
     }
 }
 
-fn process_line(line: &String) {
+fn process_line(line: &String, line_no: usize) {
     let line = line.split("//").next().unwrap_or("");  // remove comments
     let tokens : Vec<&str> = line.split_whitespace().collect();
     if tokens.is_empty() { return }
@@ -66,9 +69,9 @@ fn process_line(line: &String) {
         "add" => binary_op("D+M"),
         "sub" => binary_op("M-D"),
         "neg" => unary_op("-M"),
-        "eq" => cmp_op("JEQ"),
-        "gt" => cmp_op("JGT"),
-        "lt" => cmp_op("JLT"),
+        "eq" => cmp_op("JEQ", line_no),
+        "gt" => cmp_op("JGT", line_no),
+        "lt" => cmp_op("JLT", line_no),
         "and" => binary_op("D&M"),
         "or" => binary_op("D|M"),
         "not" => unary_op("!M"),
@@ -82,10 +85,11 @@ fn process_line(line: &String) {
 
 fn main() {
     let stdin = io::stdin();
-    for maybe_line in stdin.lock().lines() {
+    for maybe_line in stdin.lock().lines().enumerate() {
+        let (line_no, maybe_line) = maybe_line;
         match maybe_line {
-            Ok(line) => process_line(&line),
-            Err(error) => println!("wtf: {}", error),
+            Ok(line) => process_line(&line, line_no),
+            Err(error) => println!("wtf at line {}: {}", line_no, error),
         }
     }
 }
