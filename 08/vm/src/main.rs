@@ -1,8 +1,8 @@
-use std::io;
+use std::io::BufReader;
 use std::io::prelude::*;
-
-// TODO: multi-file
-static FILE_NAME: &'static str = "fakefile.vm";
+use std::env;
+use std::fs::File;
+use std::path::Path;
 
 fn clean_print(lines: String) {
     for line in lines.lines() {
@@ -93,7 +93,7 @@ fn push_static(file: &str, index: u16) -> String {
               ", file, index)
 }
 
-fn push_op(segment: &str, index: u16) -> String {
+fn push_op(segment: &str, index: u16, file_name: &String) -> String {
     match segment {
         "argument" => push_virtual("ARG", index),
         "local"    => push_virtual("LCL", index),
@@ -101,7 +101,7 @@ fn push_op(segment: &str, index: u16) -> String {
         "that"     => push_virtual("THAT", index),
         "temp"     => push_ram(5, index),
         "pointer"  => push_ram(3, index),
-        "static"   => push_static(FILE_NAME, index),
+        "static"   => push_static(file_name, index),
         "constant" => push_name(index.to_string()),
         _ => format!("!!! unimplemented segment: {}\n", segment),
     }
@@ -145,7 +145,7 @@ fn pop_static(file: &str, index: u16) -> String {
               ", file, index)
 }
 
-fn pop_op(segment: &str, index: u16) -> String {
+fn pop_op(segment: &str, index: u16, file_name: &String) -> String {
     match segment {
         "argument" => pop_virtual("ARG", index),
         "local"    => pop_virtual("LCL", index),
@@ -153,7 +153,7 @@ fn pop_op(segment: &str, index: u16) -> String {
         "that"     => pop_virtual("THAT", index),
         "temp"     => pop_ram(5, index),
         "pointer"  => pop_ram(3, index),
-        "static"   => pop_static(FILE_NAME, index),
+        "static"   => pop_static(file_name, index),
         _          => format!("!!! unimplemented segment: {}\n", segment),
     }
 }
@@ -302,7 +302,7 @@ fn print_bootstrap() {
                   // end bootstrap".to_owned());
 }
 
-fn process_line(line: &String, line_no: usize, func_name: &mut String) {
+fn process_line(line: &String, line_no: usize, file_name: &String, func_name: &mut String) {
     let line = line.split("//").next().unwrap_or("");  // remove comments
     let tokens: Vec<&str> = line.split_whitespace().collect();
     if tokens.is_empty() { return }
@@ -323,11 +323,11 @@ fn process_line(line: &String, line_no: usize, func_name: &mut String) {
         "not" => unary_op("!M"),
         "push" => {
             assert_eq!(3, tokens.len());
-            push_op(tokens[1], tokens[2].parse().ok().expect("could not parse index"))
+            push_op(tokens[1], tokens[2].parse().ok().expect("could not parse index"), &file_name)
         }
         "pop" => {
             assert_eq!(3, tokens.len());
-            pop_op(tokens[1], tokens[2].parse().ok().expect("could not parse index"))
+            pop_op(tokens[1], tokens[2].parse().ok().expect("could not parse index"), &file_name)
         }
         "label" => {
             assert_eq!(2, tokens.len());
@@ -358,14 +358,22 @@ fn process_line(line: &String, line_no: usize, func_name: &mut String) {
 }
 
 fn main() {
-    let stdin = io::stdin();
     let mut func_name = String::from("undefined");
     print_bootstrap();
-    for maybe_line in stdin.lock().lines().enumerate() {
-        let (line_no, maybe_line) = maybe_line;
-        match maybe_line {
-            Ok(line) => process_line(&line, line_no, &mut func_name),
-            Err(error) => println!("wtf at line {}: {}", line_no, error),
+    for file_path in env::args().skip(1) {
+        let file = File::open(&file_path).unwrap();
+        let file = BufReader::new(file);
+
+        let path = Path::new(&file_path);
+        let file_name = path.file_name().expect("couldn't figure out filename").to_str().unwrap();
+        let file_name = String::from(file_name);
+
+        for maybe_line in file.lines().enumerate() {
+            let (line_no, maybe_line) = maybe_line;
+            match maybe_line {
+                Ok(line) => process_line(&line, line_no, &file_name, &mut func_name),
+                Err(error) => println!("wtf at line {}: {}", line_no, error),
+            }
         }
     }
 }
