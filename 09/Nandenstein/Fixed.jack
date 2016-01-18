@@ -1,0 +1,30 @@
+class Fixed {
+  // x_lo is < 256 for now, though we could expand on decimal accuracy by increasing this
+  field int hi, lo;
+
+  constructor Fixed new(int h, int l) {
+    let hi = h;
+    let lo = l;
+
+    return this;
+  }
+
+  method void Add(int h, int l) {
+    let hi = hi + h;
+    let lo = lo + l;
+    if (lo > 255) {
+      let lo = lo - 256;
+      let hi = hi + 1;
+    }
+    return;
+  }
+
+  function Fixed copy(Fixed from) {
+    return Fixed.new(from[0], from[1]);
+  }
+
+  method void dispose() {
+    do Memory.deAlloc(this);
+    return;
+  }
+}

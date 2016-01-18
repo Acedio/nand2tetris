@@ -1,6 +1,12 @@
 class Map {
   // multi-dimension array ([row][column]) because multiplication is expensive
   field Array map;
+  // LUT for delta distance values
+  field Array dd_lut_hi;
+  field Array dd_lut_lo;
+  // LUT for angle changes between x screen columns
+  field Array x_angle_lut_hi;
+  field Array x_angle_lut_lo;
 
   field int w, h;
 
@@ -18,17 +24,33 @@ class Map {
 
       let col = 0;
       while (col < w) {
-        let cur_row[col] = row + col + col;
+        if (((col = row) & (col & 1)) | (col = 0) | (row = 0) | (col = (w - 1)) | (row = (h - 1))) {
+          let cur_row[col] = 1;
+        } else {
+          let cur_row[col] = 0;
+        }
         let col = col + 1;
       }
       let row = row + 1;
     }
+
+    let dd_lut_hi = Array.new(256);
+    let dd_lut_lo = Array.new(256);
+    do Luts.init_delta_dist(dd_lut_hi, dd_lut_lo);
+
+    let x_angle_lut_hi = Array.new(32);
+    let x_angle_lut_lo = Array.new(32);
+    do Luts.init_x_angle(x_angle_lut_hi, x_angle_lut_lo);
 
     return this;
   }
 
   method void dispose() {
     do map.dispose();
+    do dd_lut_hi.dispose();
+    do dd_lut_lo.dispose();
+    do x_angle_lut_hi.dispose();
+    do x_angle_lut_lo.dispose();
     do Memory.deAlloc(this);
     return;
   }
@@ -59,6 +81,95 @@ class Map {
     }
 
     return;
+  }
+
+  // 0 <= dir < 256
+  // depth_array.len = 32
+  method void trace_screen(Fixed pos_x, Fixed pos_y, Fixed camera_dir, Array depth_array) {
+    var Fixed theta;
+    var int screen_x;
+    // copy camera_dir so we don't screw it up
+    // the -32 here assumes a 90 degree FOV
+    let theta = Fixed.new(camera_dir[0] - 32, camera_dir[1]);
+    // using [0] for .hi and [1] for .lo saves us some slow function calls
+    if (theta[0] < 0) {
+      let theta[0] = theta[0] + 256;
+    }
+    let screen_x = 0;
+    while (screen_x < 32) {
+      // Increment the angle
+      do theta.Add(x_angle_lut_hi[screen_x], x_angle_lut_lo[screen_x]);
+      if (theta[0] > 255) {
+        let theta[0] = theta[0] - 256;
+      }
+      let depth_array[screen_x] = trace(pos_x, pos_y, theta);
+      let screen_x = screen_x + 1;
+    }
+    do theta.dispose();
+    return;
+  }
+
+  method int trace(Fixed pos_x, Fixed pos_y, Fixed dir) {
+    var boolean hit;
+    var Array cur_row;
+    var int height;
+    var int map_x, map_y;
+    var int step_x, step_y;
+    var int dir_x, dir_y;  // dir_y is just dir_x rotated 90 degrees
+    var Fixed delta_dist_x, delta_dist_y;
+    var Fixed side_dist_x, side_dist_y;
+
+    let hit = false;
+
+    let map_x = pos_x[0];
+    let map_y = pos_y[0];
+
+    let dir_x = dir[0];
+    let dir_y = dir[0] - 64;
+    if (dir_y < 0) {
+      let dir_y = dir_y + 256;
+    }
+
+    let delta_dist_x = Fixed.new(dd_lut_hi[dir_x], dd_lut_lo[dir_x]);
+    let delta_dist_y = Fixed.new(dd_lut_hi[dir_y], dd_lut_lo[dir_y]);
+
+    if ((dir[0] < 64) | (dir[0] > 192)) {
+      let step_x = 1;
+      let side_dist_x = Fixed.copy(delta_dist_x);
+    } else {
+      let step_x = -1;
+      let side_dist_x = Fixed.new(0,0);
+    }
+    if (dir[0] > 128) {
+      let step_y = 1;
+      let side_dist_x = Fixed.copy(delta_dist_y);
+    } else {
+      let step_y = -1;
+      let side_dist_y = Fixed.new(0,0);
+    }
+
+    let height = 0;
+
+    while (~hit) {
+      if ((side_dist_x[0] < side_dist_y[0]) | ((side_dist_x[0] = side_dist_y[0]) & (side_dist_x[1] < side_dist_y[1]))) {
+        do side_dist_x.Add(delta_dist_x[0], delta_dist_x[1]);
+        let map_x = map_x + step_x;
+      } else {
+        do side_dist_y.Add(delta_dist_y[0], delta_dist_y[1]);
+        let map_y = map_y + step_y;
+      }
+      let height = height + 3;
+      let cur_row = map[map_y];
+      if (cur_row[map_x]) {
+        let hit = true;
+      }
+    }
+
+    do side_dist_x.dispose();
+    do side_dist_y.dispose();
+    do delta_dist_x.dispose();
+    do delta_dist_y.dispose();
+    return height;
   }
 }
 

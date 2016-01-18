@@ -1,38 +1,47 @@
 class Main {
-  /** Initializes a new game and starts it. */    
   function void main() {
+    var int key;
     var Map map;
     var Display display;
-    var int col, height;
-    var Array high, low;
-    let map = Map.new(8,8);
+    var Fixed pos_x, pos_y;
+    var Fixed camera_dir;
+    var Array depth_array;
+
+    let pos_x = Fixed.new(2, 0);
+    let pos_y = Fixed.new(8, 0);
+    let camera_dir = Fixed.new(32, 0);
+    let depth_array = Array.new(32);
+
+    let map = Map.new(16,16);
     do map.print();
     do Output.printInt(map.at(4, 4));
-    do map.dispose();
-
-    let high = Array.new(256);
-    let low = Array.new(256);
-    do Luts.init_delta_dist(high, low);
-    do high.dispose();
-    do low.dispose();
 
     do Output.moveCursor(0,0);
 
     let display = Display.new();
-    let col = 0;
-    let height = 0;
     while (true) {
-      do display.draw_col(col, height);
-      let col = col + 1;
-      if (col > 31) {
-        let col = col - 32;
+      /*
+      let key = 0;
+      while (key = 0) {
+        let key = Keyboard.keyPressed();
       }
-      let height = height + 3;
-      if (height > 128) {
-        let height = height - 128;
+      if (key = 130) {  // left
+        let camera_dir[0] = camera_dir[0] + 1;
       }
+      if (key = 132) {  // right
+        let camera_dir[0] = camera_dir[0] - 1;
+      }
+      */
+      let camera_dir[0] = camera_dir[0] + 10;
+      if (camera_dir[0] > 255) {
+        let camera_dir[0] = camera_dir[0] - 256;
+      }
+      do map.trace_screen(pos_x, pos_y, camera_dir, depth_array);
+      do display.draw(depth_array);
     }
+    do map.dispose();
     do display.dispose();
+    do depth_array.dispose();
 
     do Output.printString("Done!");
 

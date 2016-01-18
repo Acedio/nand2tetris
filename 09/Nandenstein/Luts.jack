@@ -514,4 +514,73 @@ class Luts {
     let LUT_low[255] = 0;
     return;
   }
+
+  function void init_x_angle(Array LUT_high, Array LUT_low) {
+    let LUT_high[0] = 0;
+    let LUT_low[0] = 0;
+    let LUT_high[1] = 1;
+    let LUT_low[1] = 81;
+    let LUT_high[2] = 1;
+    let LUT_low[2] = 102;
+    let LUT_high[3] = 1;
+    let LUT_low[3] = 125;
+    let LUT_high[4] = 1;
+    let LUT_low[4] = 149;
+    let LUT_high[5] = 1;
+    let LUT_low[5] = 173;
+    let LUT_high[6] = 1;
+    let LUT_low[6] = 200;
+    let LUT_high[7] = 1;
+    let LUT_low[7] = 226;
+    let LUT_high[8] = 1;
+    let LUT_low[8] = 252;
+    let LUT_high[9] = 2;
+    let LUT_low[9] = 23;
+    let LUT_high[10] = 2;
+    let LUT_low[10] = 47;
+    let LUT_high[11] = 2;
+    let LUT_low[11] = 71;
+    let LUT_high[12] = 2;
+    let LUT_low[12] = 92;
+    let LUT_high[13] = 2;
+    let LUT_low[13] = 110;
+    let LUT_high[14] = 2;
+    let LUT_low[14] = 124;
+    let LUT_high[15] = 2;
+    let LUT_low[15] = 134;
+    let LUT_high[16] = 2;
+    let LUT_low[16] = 139;
+    let LUT_high[17] = 2;
+    let LUT_low[17] = 139;
+    let LUT_high[18] = 2;
+    let LUT_low[18] = 134;
+    let LUT_high[19] = 2;
+    let LUT_low[19] = 124;
+    let LUT_high[20] = 2;
+    let LUT_low[20] = 110;
+    let LUT_high[21] = 2;
+    let LUT_low[21] = 92;
+    let LUT_high[22] = 2;
+    let LUT_low[22] = 71;
+    let LUT_high[23] = 2;
+    let LUT_low[23] = 47;
+    let LUT_high[24] = 2;
+    let LUT_low[24] = 23;
+    let LUT_high[25] = 1;
+    let LUT_low[25] = 252;
+    let LUT_high[26] = 1;
+    let LUT_low[26] = 226;
+    let LUT_high[27] = 1;
+    let LUT_low[27] = 200;
+    let LUT_high[28] = 1;
+    let LUT_low[28] = 173;
+    let LUT_high[29] = 1;
+    let LUT_low[29] = 149;
+    let LUT_high[30] = 1;
+    let LUT_low[30] = 125;
+    let LUT_high[31] = 1;
+    let LUT_low[31] = 102;
+    return;
+  }
+
 }
