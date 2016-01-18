@@ -22,10 +22,10 @@ void print_x_angle() {
   double camera_plane_w = 2.0;
   // caller should also start at -32
   int last_int_theta = -32 * 256;
-  int i = 0;
   int values = 32;  // number of columns on the screen
-  for (i = 0; i < values; ++i) {
-    double theta = atan2(camera_plane_w * (i - values / 2) / (float)values, 1.0);
+  int i;
+  for (i = 31; i >= 0; --i) {
+    double theta = atan2(camera_plane_w * (values / 2 - i) / (float)values, 1.0);
     // transform from a 2*pi circle to a 256 circle
     double theta_256 = 256 * theta / (2 * 3.14159);
     int int_theta = 256 * theta_256;
