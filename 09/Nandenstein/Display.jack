@@ -11,15 +11,22 @@ class Display {
   field Array last_frame_mem_top;
   // memory address of last bottom filled pixrow for each column
   field Array last_frame_mem_bot;
-  field int w, h, half_h;
+  field int w;
 
   constructor Display new() {
-    var int col;
     let w = 32;
-    let h = 256;
     let last_frame = Array.new(w);
     let last_frame_mem_top = Array.new(w);
     let last_frame_mem_bot = Array.new(w);
+
+    do clear();
+
+    return this;
+  }
+
+  method void clear() {
+    var int col;
+    let w = 32;
 
     let col = 0;
     while (col < w) {
@@ -27,9 +34,12 @@ class Display {
       // SCREEN = 16384 and is 8192 pixrows total
       let last_frame_mem_top[col] = 16384 + 4096 + col;  // middle of screen so wall off
       let last_frame_mem_bot[col] = 16384 + 4096 + col;  // middle of screen so wall off
+      do fill_up(last_frame_mem_top[col], 128, 0);
+      // Floor pattern = 21845
+      do fill_down(last_frame_mem_bot[col], 128, 21845);
       let col = col + 1;
     }
-    return this;
+    return;
   }
 
   method void dispose() {
@@ -71,7 +81,8 @@ class Display {
       let pixrow = last_frame_mem_top[col];
       let last_frame_mem_top[col] = fill_down(pixrow, rows, 0);
       let pixrow = last_frame_mem_bot[col];
-      let last_frame_mem_bot[col] = fill_up(pixrow, rows, 0);
+      // Floor pattern = 21845
+      let last_frame_mem_bot[col] = fill_up(pixrow, rows, 21845);
     }
     return;
   }

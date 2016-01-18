@@ -25,9 +25,11 @@ class Main {
           do display.draw_col(col, height);
           let col = col + 1;
           if (col > 31) {
+            while (~Keyboard.keyPressed()) {
+            }
             let col = col - 32;
           }
-          let height = height + 11;
+          let height = height + 3;
           if (height > 128) {
             let height = height - 128;
           }
