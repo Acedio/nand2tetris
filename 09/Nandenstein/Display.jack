@@ -1,0 +1,106 @@
+class Display {
+  // I'll use the term "pixrow" a lot here. Our display is actually a 32x256 block of words.
+  // Each word, or pixrow, actually stores 16 pixels.
+
+  // values are distance of the wall from the top of the screen. 0 = all wall, 128 = no wall
+  field Array last_frame;
+
+  // store memory offsets of the (one above) top and bottom filled pixrows for each column
+  // so we don't have to recalculate each frame (multiplication x_x)
+  // memory address of pixrow above the last filled for each column
+  field Array last_frame_mem_top;
+  // memory address of last bottom filled pixrow for each column
+  field Array last_frame_mem_bot;
+  field int w, h, half_h;
+
+  constructor Display new() {
+    var int col;
+    let w = 32;
+    let h = 256;
+    let last_frame = Array.new(w);
+    let last_frame_mem_top = Array.new(w);
+    let last_frame_mem_bot = Array.new(w);
+
+    let col = 0;
+    while (col < w) {
+      let last_frame[col] = 128;
+      // SCREEN = 16384 and is 8192 pixrows total
+      let last_frame_mem_top[col] = 16384 + 4096 + col;  // middle of screen so wall off
+      let last_frame_mem_bot[col] = 16384 + 4096 + col;  // middle of screen so wall off
+      let col = col + 1;
+    }
+    return this;
+  }
+
+  method void dispose() {
+    do last_frame.dispose();
+    do last_frame_mem_top.dispose();
+    do last_frame_mem_bot.dispose();
+    do Memory.deAlloc(this);
+    return;
+  }
+
+  // next_frame should have len = w
+  method void draw(Array next_frame) {
+    var int col;
+    
+    while (col < w) {
+      do draw_col(col, next_frame[col]);
+
+      let col = col + 1;
+    }
+    return;
+  }
+
+  method void draw_col(int col, int next_val) {
+    var int pixrow;  // memory address of the "pixel" that's actually 16 pixels wide
+    var int rows;
+    var int last_val;
+    let last_val = last_frame[col];
+    let last_frame[col] = next_val;
+    if (next_val < last_val) {
+      // new wall is bigger, draw extra wall
+      let rows = last_val - next_val;
+      let pixrow = last_frame_mem_top[col];
+      let last_frame_mem_top[col] = fill_up(pixrow, rows, -1);
+      let pixrow = last_frame_mem_bot[col];
+      let last_frame_mem_bot[col] = fill_down(pixrow, rows, -1);
+    } else {
+      // new wall is smaller, erase extra wall
+      let rows = next_val - last_val;
+      let pixrow = last_frame_mem_top[col];
+      let last_frame_mem_top[col] = fill_down(pixrow, rows, 0);
+      let pixrow = last_frame_mem_bot[col];
+      let last_frame_mem_bot[col] = fill_up(pixrow, rows, 0);
+    }
+    return;
+  }
+
+  // start is the memory address below the first row to be filled
+  // returns the last memory address filled
+  method int fill_up(int start, int rows, int fill_val) {
+    var int row;
+    let row = 0;
+    while (row < rows) {
+      let start = start - 32;  // one row up
+      do Memory.poke(start, fill_val);
+      let row = row + 1;
+    }
+    return start;
+  }
+
+  // start is the memory address of the first row to be filled (different from fill_up!)
+  // returns the memory address of the pixrow one row below the last filled
+  method int fill_down(int start, int rows, int fill_val) {
+    var int row;
+    let row = 0;
+    while (row < rows) {
+      do Memory.poke(start, fill_val);
+      let start = start + 32; // one row down
+      let row = row + 1;
+    }
+    return start;
+  }
+}
+
+// vim: set cindent:

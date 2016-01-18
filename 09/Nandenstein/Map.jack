@@ -1,0 +1,65 @@
+class Map {
+  // multi-dimension array ([row][column]) because multiplication is expensive
+  field Array map;
+
+  field int w, h;
+
+  constructor Map new(int Width, int Height) {
+    var int row, col;
+    var Array cur_row;
+    let w = Width;
+    let h = Height;
+
+    let map = Array.new(h);
+    let row = 0;
+    while (row < h) {
+      let map[row] = Array.new(w);
+      let cur_row = map[row];
+
+      let col = 0;
+      while (col < w) {
+        let cur_row[col] = row + col + col;
+        let col = col + 1;
+      }
+      let row = row + 1;
+    }
+
+    return this;
+  }
+
+  method void dispose() {
+    do map.dispose();
+    do Memory.deAlloc(this);
+    return;
+  }
+
+  method int at(int x, int y) {
+    var Array cur_row;
+    let cur_row = map[y];
+    return cur_row[x];
+  }
+
+  method void print() {
+    var int row, col;
+    var Array cur_row;
+
+    let row = 0;
+    while (row < h) {
+      let cur_row = map[row];
+
+      let col = 0;
+      while (col < w) {
+        do Output.printInt(cur_row[col]);
+        do Output.printChar(20);
+
+        let col = col + 1;
+      }
+      do Output.println();
+      let row = row + 1;
+    }
+
+    return;
+  }
+}
+
+// vim: set cindent:
