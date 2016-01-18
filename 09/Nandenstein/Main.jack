@@ -1,45 +1,43 @@
-// This file is part of www.nand2tetris.org
-// and the book "The Elements of Computing Systems"
-// by Nisan and Schocken, MIT Press.
-// File name: projects/09/Square/Main.jack
-
-/**
- * The Main class initializes a new Square Dance game and starts it.
- */
 class Main {
+  /** Initializes a new game and starts it. */    
+  function void main() {
+    var Map map;
+    var Display display;
+    var int col, height;
+    var Array high, low;
+    let map = Map.new(8,8);
+    do map.print();
+    do Output.printInt(map.at(4, 4));
+    do map.dispose();
 
-    /** Initializes a new game and starts it. */    
-    function void main() {
-        var Map map;
-        var Display display;
-        var int col, height;
-        let map = Map.new(8,8);
-        do map.print();
-        do Output.printInt(map.at(4, 4));
-        do map.dispose();
+    let high = Array.new(256);
+    let low = Array.new(256);
+    do Luts.init_delta_dist(high, low);
+    do high.dispose();
+    do low.dispose();
 
-        let display = Display.new();
-        let col = 0;
-        let height = 0;
-        while (true) {
-          do display.draw_col(col, height);
-          let col = col + 1;
-          if (col > 31) {
-            while (~Keyboard.keyPressed()) {
-            }
-            let col = col - 32;
-          }
-          let height = height + 3;
-          if (height > 128) {
-            let height = height - 128;
-          }
-        }
-        do display.dispose();
+    do Output.moveCursor(0,0);
 
-        do Output.printString("Done!");
-
-        return;
+    let display = Display.new();
+    let col = 0;
+    let height = 0;
+    while (true) {
+      do display.draw_col(col, height);
+      let col = col + 1;
+      if (col > 31) {
+        let col = col - 32;
+      }
+      let height = height + 3;
+      if (height > 128) {
+        let height = height - 128;
+      }
     }
+    do display.dispose();
+
+    do Output.printString("Done!");
+
+    return;
+  }
 }
 
 // vim: set cindent:

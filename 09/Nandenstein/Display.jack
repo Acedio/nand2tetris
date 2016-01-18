@@ -94,7 +94,7 @@ class Display {
     let row = 0;
     while (row < rows) {
       let start = start - 32;  // one row up
-      do Memory.poke(start, fill_val);
+      let start[0] = fill_val;  // hooray type safety!
       let row = row + 1;
     }
     return start;
@@ -106,7 +106,7 @@ class Display {
     var int row;
     let row = 0;
     while (row < rows) {
-      do Memory.poke(start, fill_val);
+      let start[0] = fill_val;  // more type safety!
       let start = start + 32; // one row down
       let row = row + 1;
     }
