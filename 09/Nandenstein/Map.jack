@@ -2,16 +2,15 @@ class Map {
   // multi-dimension array ([row][column]) because multiplication is expensive
   field Array map;
   // LUT for delta distance values
-  field Array dd_lut_hi;
-  field Array dd_lut_lo;
+  field Array dd_lut;
   // LUT for angle changes between x screen columns
   field Array x_angle_lut_hi;
   field Array x_angle_lut_lo;
   // LUT for height from distance
   field Array height_from_dist_lut;
 
-  field Fixed delta_dist_x, delta_dist_y;
-  field Fixed side_dist_x, side_dist_y;
+  field int delta_dist_x, delta_dist_y;
+  field int side_dist_x, side_dist_y;
 
   field int w, h;
 
@@ -39,35 +38,24 @@ class Map {
       let row = row + 1;
     }
 
-    let dd_lut_hi = Array.new(256);
-    let dd_lut_lo = Array.new(256);
-    do Luts.init_delta_dist(dd_lut_hi, dd_lut_lo);
+    let dd_lut = Array.new(256);
+    do Luts.init_delta_dist(dd_lut);
 
     let x_angle_lut_hi = Array.new(32);
     let x_angle_lut_lo = Array.new(32);
     do Luts.init_x_angle(x_angle_lut_hi, x_angle_lut_lo);
 
-    let height_from_dist_lut = Array.new(128);
+    let height_from_dist_lut = Array.new(256);
     do Luts.init_height_from_dist(height_from_dist_lut);
-
-    let delta_dist_x = Fixed.new(0,0);
-    let delta_dist_y = Fixed.new(0,0);
-    let side_dist_x = Fixed.new(0,0);
-    let side_dist_y = Fixed.new(0,0);
 
     return this;
   }
 
   method void dispose() {
     do map.dispose();
-    do dd_lut_hi.dispose();
-    do dd_lut_lo.dispose();
+    do dd_lut.dispose();
     do x_angle_lut_hi.dispose();
     do x_angle_lut_lo.dispose();
-    do side_dist_x.dispose();
-    do side_dist_y.dispose();
-    do delta_dist_x.dispose();
-    do delta_dist_y.dispose();
     do height_from_dist_lut.dispose();
     do Memory.deAlloc(this);
     return;
@@ -131,10 +119,12 @@ class Map {
     var boolean hit;
     var boolean side;
     var Array cur_row;
-    var int height;
     var int map_x, map_y;
     var int step_x, step_y;
     var int dir_x, dir_y;  // dir_y is just dir_x rotated 90 degrees
+    var int dist;
+    var int dist_shift;
+    var int bitmask, addend;
 
     let hit = false;
 
@@ -147,57 +137,34 @@ class Map {
       let dir_y = dir_y + 256;
     }
 
-    let delta_dist_x[0] = dd_lut_hi[dir_x];
-    let delta_dist_x[1] = dd_lut_lo[dir_x];
-    let delta_dist_y[0] = dd_lut_hi[dir_y];
-    let delta_dist_y[1] = dd_lut_lo[dir_y];
+    let delta_dist_x = dd_lut[dir_x];
+    let delta_dist_y = dd_lut[dir_y];
 
     if ((dir[0] < 64) | (dir[0] > 192)) {
       let step_x = 1;
-      let side_dist_x[0] = delta_dist_x[0];
-      let side_dist_x[1] = delta_dist_x[1];
+      let side_dist_x = delta_dist_x;
     } else {
       let step_x = -1;
-      let side_dist_x[0] = 0;
-      let side_dist_x[1] = 0;
+      let side_dist_x = 0;
     }
     if (dir[0] > 128) {
       let step_y = 1;
-      let side_dist_y[0] = delta_dist_y[0];
-      let side_dist_y[1] = delta_dist_y[1];
+      let side_dist_y = delta_dist_y;
     } else {
       let step_y = -1;
-      let side_dist_y[0] = 0;
-      let side_dist_y[1] = 0;
+      let side_dist_y = 0;
     }
 
-    let height = 0;
-
     while (~hit) {
-      if ((side_dist_x[0] < side_dist_y[0]) | ((side_dist_x[0] = side_dist_y[0]) & (side_dist_x[1] < side_dist_y[1]))) {
-        // do side_dist_x.Add(delta_dist_x[0], delta_dist_x[1]);
-        let side_dist_x[1] = side_dist_x[1] + delta_dist_x[1];
-        if (side_dist_x[1] > 255) {
-          let side_dist_x[1] = side_dist_x[1] - 256;
-          let side_dist_x[0] = side_dist_x[0] + delta_dist_x[0] + 1;
-        } else {
-          let side_dist_x[0] = side_dist_x[0] + delta_dist_x[0];
-        }
+      if (side_dist_x < side_dist_y) {
+        let side_dist_x = side_dist_x + delta_dist_x;
         let map_x = map_x + step_x;
         let side = true;
       } else {
-        // do side_dist_y.Add(delta_dist_y[0], delta_dist_y[1]);
-        let side_dist_y[1] = side_dist_y[1] + delta_dist_y[1];
-        if (side_dist_y[1] > 255) {
-          let side_dist_y[1] = side_dist_y[1] - 256;
-          let side_dist_y[0] = side_dist_y[0] + delta_dist_y[0] + 1;
-        } else {
-          let side_dist_y[0] = side_dist_y[0] + delta_dist_y[0];
-        }
+        let side_dist_y = side_dist_y + delta_dist_y;
         let map_y = map_y + step_y;
         let side = false;
       }
-      let height = height + 3;
       let cur_row = map[map_y];
       if (cur_row[map_x]) {
         let hit = true;
@@ -205,9 +172,27 @@ class Map {
     }
 
     if (side) {
-      return height_from_dist_lut[side_dist_x[0]];
+      let dist = side_dist_x;
     } else {
-      return -height_from_dist_lut[side_dist_y[0]];
+      let dist = side_dist_y;
+    }
+
+    let bitmask = 32;
+    let addend = 1;
+    let dist_shift = 0;
+
+    while (addend < 256) {
+      if (dist & bitmask) {
+        let dist_shift = dist_shift + addend;
+      }
+      let bitmask = bitmask + bitmask;
+      let addend = addend + addend;
+    }
+
+    if (side) {
+      return height_from_dist_lut[dist_shift];
+    } else {
+      return -height_from_dist_lut[dist_shift];
     }
   }
 }

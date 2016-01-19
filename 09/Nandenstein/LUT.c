@@ -2,7 +2,7 @@
 #include <math.h>
 
 void print_delta_distance() {
-  printf("  function void init_delta_dist(Array LUT_high, Array LUT_low) {\n");
+  printf("  function void init_delta_dist(Array lut) {\n");
   int i = 0;
   int values = 256;  // number of discrete angles
   for (i = 0; i < values; ++i) {
@@ -10,8 +10,7 @@ void print_delta_distance() {
     double theta = ((i + 0.5) * (2.0 * 3.14159)) / values;
     double value = sqrt(1.0 + (sin(theta) * sin(theta)) / (cos(theta) * cos(theta)));
     int int_val = 256 * value;
-    printf("    let LUT_high[%d] = %d;\n", i, int_val >> 8);
-    printf("    let LUT_low[%d] = %d;\n", i, int_val & 0xFF);
+    printf("    let lut[%d] = %d;\n", i, int_val & 0xFFFF);
   }
   printf("    return;\n  }\n\n");
 }
@@ -40,9 +39,10 @@ void print_x_angle() {
 void print_height_from_dist() {
   printf("  function void init_height_from_dist(Array lut) {\n");
   int i = 0;
-  int values = 128;  // furthest possible dist (eh)
+  int values = 256;  // furthest possible dist (eh)
   for (i = 0; i < values; ++i) {
-    double height = (3.0 * 256.0) / (i + 3);
+    double height = 32.0 * 200.0 / (i + 1);
+    if (height > 256) height = 256;
     double from_top = (256.0 - height) / 2;
     int int_val = from_top;
     printf("    let lut[%d] = %d;\n", i, int_val);
