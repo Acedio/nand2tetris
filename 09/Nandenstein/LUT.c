@@ -37,10 +37,24 @@ void print_x_angle() {
   printf("    return;\n  }\n\n");
 }
 
+void print_height_from_dist() {
+  printf("  function void init_height_from_dist(Array lut) {\n");
+  int i = 0;
+  int values = 128;  // furthest possible dist (eh)
+  for (i = 0; i < values; ++i) {
+    double height = (3.0 * 256.0) / (i + 3);
+    double from_top = (256.0 - height) / 2;
+    int int_val = from_top;
+    printf("    let lut[%d] = %d;\n", i, int_val);
+  }
+  printf("    return;\n  }\n\n");
+}
+
 int main() {
   printf("class Luts {\n");
   print_delta_distance();
   print_x_angle();
+  print_height_from_dist();
   printf("}\n");
   return 0;
 }

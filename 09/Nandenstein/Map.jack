@@ -7,6 +7,8 @@ class Map {
   // LUT for angle changes between x screen columns
   field Array x_angle_lut_hi;
   field Array x_angle_lut_lo;
+  // LUT for height from distance
+  field Array height_from_dist_lut;
 
   field Fixed delta_dist_x, delta_dist_y;
   field Fixed side_dist_x, side_dist_y;
@@ -45,6 +47,9 @@ class Map {
     let x_angle_lut_lo = Array.new(32);
     do Luts.init_x_angle(x_angle_lut_hi, x_angle_lut_lo);
 
+    let height_from_dist_lut = Array.new(128);
+    do Luts.init_height_from_dist(height_from_dist_lut);
+
     let delta_dist_x = Fixed.new(0,0);
     let delta_dist_y = Fixed.new(0,0);
     let side_dist_x = Fixed.new(0,0);
@@ -63,6 +68,7 @@ class Map {
     do side_dist_y.dispose();
     do delta_dist_x.dispose();
     do delta_dist_y.dispose();
+    do height_from_dist_lut.dispose();
     do Memory.deAlloc(this);
     return;
   }
@@ -199,9 +205,9 @@ class Map {
     }
 
     if (side) {
-      return height;
+      return height_from_dist_lut[side_dist_x[0]];
     } else {
-      return -height;
+      return -height_from_dist_lut[side_dist_y[0]];
     }
   }
 }
