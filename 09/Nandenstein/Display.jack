@@ -4,6 +4,7 @@ class Display {
 
   // values are distance of the wall from the top of the screen. 0 = all wall, 128 = no wall
   field Array last_frame;
+  field Array last_frame_pattern;
 
   // store memory offsets of the (one above) top and bottom filled pixrows for each column
   // so we don't have to recalculate each frame (multiplication x_x)
@@ -16,6 +17,7 @@ class Display {
   constructor Display new() {
     let w = 32;
     let last_frame = Array.new(w);
+    let last_frame_pattern = Array.new(w);
     let last_frame_mem_top = Array.new(w);
     let last_frame_mem_bot = Array.new(w);
 
@@ -31,6 +33,7 @@ class Display {
     let col = 0;
     while (col < w) {
       let last_frame[col] = 128;
+      let last_frame_pattern[col] = 1234;
       // SCREEN = 16384 and is 8192 pixrows total
       let last_frame_mem_top[col] = 16384 + 4096 + col;  // middle of screen so wall off
       let last_frame_mem_bot[col] = 16384 + 4096 + col;  // middle of screen so wall off
@@ -55,31 +58,44 @@ class Display {
     var int col;
     
     while (col < w) {
-      do draw_col(col, next_frame[col]);
+      if (next_frame[col] < 0) {
+        do draw_col(col, -next_frame[col], 32639);
+      } else {
+        do draw_col(col, next_frame[col], -1);
+      }
 
       let col = col + 1;
     }
     return;
   }
 
-  method void draw_col(int col, int next_val) {
+  method void draw_col(int col, int next_val, int next_pattern) {
     var int pixrow;  // memory address of the "pixel" that's actually 16 pixels wide
     var int rows;
     var int last_val;
+    var int last_pattern;
     let last_val = last_frame[col];
     let last_frame[col] = next_val;
+    let last_pattern = last_frame_pattern[col];
+    let last_frame_pattern[col] = next_pattern;
     if (next_val < last_val) {
       // new wall is bigger, draw extra wall
       let rows = last_val - next_val;
       let pixrow = last_frame_mem_top[col];
-      let last_frame_mem_top[col] = fill_up(pixrow, rows, -1);
+      let last_frame_mem_top[col] = fill_up(pixrow, rows, next_pattern);
+      if (~(last_pattern = next_pattern)) {
+        do fill_down(pixrow, 256 - (last_val + last_val), next_pattern);
+      }
       let pixrow = last_frame_mem_bot[col];
-      let last_frame_mem_bot[col] = fill_down(pixrow, rows, -1);
+      let last_frame_mem_bot[col] = fill_down(pixrow, rows, next_pattern);
     } else {
       // new wall is smaller, erase extra wall
       let rows = next_val - last_val;
       let pixrow = last_frame_mem_top[col];
       let last_frame_mem_top[col] = fill_down(pixrow, rows, 0);
+      if (~(last_pattern = next_pattern)) {
+        do fill_down(last_frame_mem_top[col], 256 - (next_val + next_val), next_pattern);
+      }
       let pixrow = last_frame_mem_bot[col];
       // Floor pattern = 21845
       let last_frame_mem_bot[col] = fill_up(pixrow, rows, 21845);
