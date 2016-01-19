@@ -168,10 +168,24 @@ class Map {
 
     while (~hit) {
       if ((side_dist_x[0] < side_dist_y[0]) | ((side_dist_x[0] = side_dist_y[0]) & (side_dist_x[1] < side_dist_y[1]))) {
-        do side_dist_x.Add(delta_dist_x[0], delta_dist_x[1]);
+        // do side_dist_x.Add(delta_dist_x[0], delta_dist_x[1]);
+        let side_dist_x[1] = side_dist_x[1] + delta_dist_x[1];
+        if (side_dist_x[1] > 255) {
+          let side_dist_x[1] = side_dist_x[1] - 256;
+          let side_dist_x[0] = side_dist_x[0] + delta_dist_x[0] + 1;
+        } else {
+          let side_dist_x[0] = side_dist_x[0] + delta_dist_x[0];
+        }
         let map_x = map_x + step_x;
       } else {
-        do side_dist_y.Add(delta_dist_y[0], delta_dist_y[1]);
+        // do side_dist_y.Add(delta_dist_y[0], delta_dist_y[1]);
+        let side_dist_y[1] = side_dist_y[1] + delta_dist_y[1];
+        if (side_dist_y[1] > 255) {
+          let side_dist_y[1] = side_dist_y[1] - 256;
+          let side_dist_y[0] = side_dist_y[0] + delta_dist_y[0] + 1;
+        } else {
+          let side_dist_y[0] = side_dist_y[0] + delta_dist_y[0];
+        }
         let map_y = map_y + step_y;
       }
       let height = height + 3;

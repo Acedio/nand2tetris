@@ -26,9 +26,15 @@ class Main {
       }
       if (key = 130) {  // left
         let camera_dir[0] = camera_dir[0] + 1;
+        if (camera_dir[0] > 255) {
+          let camera_dir[0] = camera_dir[0] - 256;
+        }
       }
       if (key = 132) {  // right
         let camera_dir[0] = camera_dir[0] - 1;
+        if (camera_dir[0] < 0) {
+          let camera_dir[0] = camera_dir[0] + 256;
+        }
       }
       do map.trace_screen(pos_x, pos_y, camera_dir, depth_array);
       do display.draw(depth_array);
