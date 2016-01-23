@@ -59,9 +59,9 @@ class Display {
     
     while (col < w) {
       if (next_frame[col] < 0) {
-        do draw_col(col, -next_frame[col], 32639);
+        do draw_col(col, -next_frame[col], 1);
       } else {
-        do draw_col(col, next_frame[col], -1);
+        do draw_col(col, next_frame[col], 0);
       }
 
       let col = col + 1;
@@ -82,19 +82,35 @@ class Display {
       // new wall is bigger, draw extra wall
       let rows = last_val - next_val;
       let pixrow = last_frame_mem_top[col];
-      let last_frame_mem_top[col] = fill_up(pixrow, rows, next_pattern);
+      if (next_pattern) {
+        let last_frame_mem_top[col] = fill_up_alt(pixrow, rows, 21845);
+      } else {
+        let last_frame_mem_top[col] = fill_up(pixrow, rows, -1);
+      }
       if (~(last_pattern = next_pattern)) {
-        do fill_down(pixrow, 256 - (last_val + last_val), next_pattern);
+        if (next_pattern) {
+          do fill_down_alt(pixrow, 256 - (last_val + last_val), 21845);
+        } else {
+          do fill_down(pixrow, 256 - (last_val + last_val), -1);
+        }
       }
       let pixrow = last_frame_mem_bot[col];
-      let last_frame_mem_bot[col] = fill_down(pixrow, rows, next_pattern);
+      if (next_pattern) {
+        let last_frame_mem_bot[col] = fill_down_alt(pixrow, rows, 21845);
+      } else {
+        let last_frame_mem_bot[col] = fill_down(pixrow, rows, -1);
+      }
     } else {
       // new wall is smaller, erase extra wall
       let rows = next_val - last_val;
       let pixrow = last_frame_mem_top[col];
       let last_frame_mem_top[col] = fill_down(pixrow, rows, 0);
       if (~(last_pattern = next_pattern)) {
-        do fill_down(last_frame_mem_top[col], 256 - (next_val + next_val), next_pattern);
+        if (next_pattern) {
+          do fill_down_alt(last_frame_mem_top[col], 256 - (next_val + next_val), 21845);
+        } else {
+          do fill_down(last_frame_mem_top[col], 256 - (next_val + next_val), -1);
+        }
       }
       let pixrow = last_frame_mem_bot[col];
       // Floor pattern = 21845
@@ -116,6 +132,22 @@ class Display {
     return start;
   }
 
+  // Alternates between black and the given pattern
+  method int fill_up_alt(int start, int rows, int fill_val) {
+    var int row;
+    let row = 0;
+    while (row < rows) {
+      let start = start - 32;  // one row up
+      if (start & 32) {
+        let start[0] = fill_val;
+      } else {
+        let start[0] = -1;
+      }
+      let row = row + 1;
+    }
+    return start;
+  }
+
   // start is the memory address of the first row to be filled (different from fill_up!)
   // returns the memory address of the pixrow one row below the last filled
   method int fill_down(int start, int rows, int fill_val) {
@@ -123,6 +155,22 @@ class Display {
     let row = 0;
     while (row < rows) {
       let start[0] = fill_val;  // more type safety!
+      let start = start + 32; // one row down
+      let row = row + 1;
+    }
+    return start;
+  }
+
+  // Alternates between black and the given pattern
+  method int fill_down_alt(int start, int rows, int fill_val) {
+    var int row;
+    let row = 0;
+    while (row < rows) {
+      if (start & 32) {
+        let start[0] = fill_val;
+      } else {
+        let start[0] = -1;
+      }
       let start = start + 32; // one row down
       let row = row + 1;
     }
