@@ -6,8 +6,6 @@ class Map {
   // LUT for angle changes between x screen columns
   field Array x_angle_lut_hi;
   field Array x_angle_lut_lo;
-  // LUT for height from distance
-  field Array height_from_dist_lut;
   // LUT for cosine
   field Array cos_lut;
 
@@ -47,9 +45,6 @@ class Map {
     let x_angle_lut_lo = Array.new(32);
     do Luts.init_x_angle(x_angle_lut_hi, x_angle_lut_lo);
 
-    let height_from_dist_lut = Array.new(256);
-    do Luts.init_height_from_dist(height_from_dist_lut);
-
     let cos_lut = Array.new(256);
     do Luts.init_cos(cos_lut);
 
@@ -61,7 +56,6 @@ class Map {
     do dd_lut.dispose();
     do x_angle_lut_hi.dispose();
     do x_angle_lut_lo.dispose();
-    do height_from_dist_lut.dispose();
     do Memory.deAlloc(this);
     return;
   }
@@ -109,8 +103,8 @@ class Map {
   }
 
   // 0 <= dir < 256
-  // depth_array.len = 32
-  method void trace_screen(Fixed pos_x, Fixed pos_y, Fixed camera_dir, Array depth_array) {
+  // dists.len = 32
+  method void trace_screen(Fixed pos_x, Fixed pos_y, Fixed camera_dir, Array dists, Array wall_types) {
     var Fixed theta;
     var int screen_x;
     // copy camera_dir so we don't screw it up
@@ -127,7 +121,7 @@ class Map {
       if (theta[0] > 255) {
         let theta[0] = theta[0] - 256;
       }
-      let depth_array[screen_x] = trace(pos_x, pos_y, theta);
+      do trace(pos_x, pos_y, theta, dists + screen_x, wall_types + screen_x);
       let screen_x = screen_x - 1;
     }
     do theta.dispose();
@@ -151,14 +145,13 @@ class Map {
     return sum;
   }
 
-  method int trace(Fixed pos_x, Fixed pos_y, Fixed dir) {
+  method void trace(Fixed pos_x, Fixed pos_y, Fixed dir, int dist, int wall_type) {
     var boolean hit;
     var boolean side;
     var Array cur_row;
     var int map_x, map_y;
     var int step_x, step_y;
     var int dir_x, dir_y;  // dir_y is just dir_x rotated 90 degrees
-    var int dist;
     var int dist_shift;
     var int bitmask, addend;
 
@@ -207,28 +200,14 @@ class Map {
 
     if (side) {
       // we overstepped by delta_dist, so need to correct
-      let dist = side_dist_x - delta_dist_x;
+      let dist[0] = side_dist_x - delta_dist_x;
+      let wall_type[0] = 1;
     } else {
-      let dist = side_dist_y - delta_dist_y;
+      let dist[0] = side_dist_y - delta_dist_y;
+      let wall_type[0] = 0;
     }
 
-    let bitmask = 32;
-    let addend = 1;
-    let dist_shift = 0;
-
-    while (addend < 256) {
-      if (dist & bitmask) {
-        let dist_shift = dist_shift + addend;
-      }
-      let bitmask = bitmask + bitmask;
-      let addend = addend + addend;
-    }
-
-    if (side) {
-      return height_from_dist_lut[dist_shift];
-    } else {
-      return -height_from_dist_lut[dist_shift];
-    }
+    return;
   }
 }
 

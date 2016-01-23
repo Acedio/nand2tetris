@@ -5,12 +5,14 @@ class Main {
     var Display display;
     var Fixed pos_x, pos_y;
     var Fixed camera_dir;
-    var Array depth_array;
+    var Array dists;
+    var Array wall_types;
 
     let pos_x = Fixed.new(2, 0);
     let pos_y = Fixed.new(8, 0);
     let camera_dir = Fixed.new(64, 0);
-    let depth_array = Array.new(32);
+    let dists = Array.new(32);
+    let wall_types = Array.new(32);
 
     let map = Map.new(16,16);
     do map.print();
@@ -20,8 +22,8 @@ class Main {
 
     let display = Display.new();
     while (true) {
-      do map.trace_screen(pos_x, pos_y, camera_dir, depth_array);
-      do display.draw(depth_array);
+      do map.trace_screen(pos_x, pos_y, camera_dir, dists, wall_types);
+      do display.draw(dists, wall_types);
       let key = 0;
       while (key = 0) {
         let key = Keyboard.keyPressed();
@@ -45,11 +47,7 @@ class Main {
         do map.update_pos(pos_x, pos_y, (128 + camera_dir[0]) & 255);
       }
     }
-    do map.dispose();
-    do display.dispose();
-    do depth_array.dispose();
-
-    do Output.printString("Done!");
+    // dispose()s would go here, but we'll never reach them so whatever :P
 
     return;
   }
