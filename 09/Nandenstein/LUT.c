@@ -50,11 +50,24 @@ void print_height_from_dist() {
   printf("    return;\n  }\n\n");
 }
 
+void print_cos() {
+  printf("  function void init_cos(Array lut) {\n");
+  int i = 0;
+  int values = 256;  // furthest possible dist (eh)
+  for (i = 0; i < values; ++i) {
+    double theta = ((i + 0.5) * (2.0 * 3.14159)) / values;
+    int int_val = 30 * cos(theta);
+    printf("    let lut[%d] = %d;\n", i, int_val);
+  }
+  printf("    return;\n  }\n\n");
+}
+
 int main() {
   printf("class Luts {\n");
   print_delta_distance();
   print_x_angle();
   print_height_from_dist();
+  print_cos();
   printf("}\n");
   return 0;
 }

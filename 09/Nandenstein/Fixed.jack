@@ -16,6 +16,10 @@ class Fixed {
       let lo = lo - 256;
       let hi = hi + 1;
     }
+    if (lo < 0) {
+      let lo = lo + 256;
+      let hi = hi - 1;
+    }
     return;
   }
 

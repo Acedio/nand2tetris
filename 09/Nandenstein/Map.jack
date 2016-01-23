@@ -8,6 +8,8 @@ class Map {
   field Array x_angle_lut_lo;
   // LUT for height from distance
   field Array height_from_dist_lut;
+  // LUT for cosine
+  field Array cos_lut;
 
   field int delta_dist_x, delta_dist_y;
   field int side_dist_x, side_dist_y;
@@ -47,6 +49,9 @@ class Map {
 
     let height_from_dist_lut = Array.new(256);
     do Luts.init_height_from_dist(height_from_dist_lut);
+
+    let cos_lut = Array.new(256);
+    do Luts.init_cos(cos_lut);
 
     return this;
   }
@@ -89,6 +94,13 @@ class Map {
     return;
   }
 
+  method void update_pos(Fixed pos_x, Fixed pos_y, int dir) {
+    do pos_x.Add(0, cos_lut[dir]);
+    do pos_y.Add(0, cos_lut[(dir + 64)&255]);
+
+    return;
+  }
+
   // 0 <= dir < 256
   // depth_array.len = 32
   method void trace_screen(Fixed pos_x, Fixed pos_y, Fixed camera_dir, Array depth_array) {
@@ -115,6 +127,23 @@ class Map {
     return;
   }
 
+  method int tb_mul(int top, int bot) {
+    var int mask;
+    var int sum;
+    
+    let mask = 256;
+
+    while (mask > 0) {
+      if (mask & top) {
+        let sum = sum + bot;
+      }
+      let bot = bot + bot;
+      let mask = mask + mask;
+    }
+
+    return sum;
+  }
+
   method int trace(Fixed pos_x, Fixed pos_y, Fixed dir) {
     var boolean hit;
     var boolean side;
@@ -132,27 +161,25 @@ class Map {
     let map_y = pos_y[0];
 
     let dir_x = dir[0];
-    let dir_y = dir[0] - 64;
-    if (dir_y < 0) {
-      let dir_y = dir_y + 256;
-    }
+    let dir_y = (dir[0] - 64) & 255;
 
     let delta_dist_x = dd_lut[dir_x];
     let delta_dist_y = dd_lut[dir_y];
-
+    
     if ((dir[0] < 64) | (dir[0] > 192)) {
       let step_x = 1;
-      let side_dist_x = delta_dist_x;
+      // have already traveled a fraction of the way towards the next x
+      let side_dist_x = tb_mul(delta_dist_x, 255 - pos_x[1]);
     } else {
       let step_x = -1;
-      let side_dist_x = 0;
+      let side_dist_x = tb_mul(delta_dist_x, pos_x[1]);
     }
     if (dir[0] > 128) {
       let step_y = 1;
-      let side_dist_y = delta_dist_y;
+      let side_dist_y = tb_mul(delta_dist_y, 255 - pos_y[1]);
     } else {
       let step_y = -1;
-      let side_dist_y = 0;
+      let side_dist_y = tb_mul(delta_dist_y, pos_y[1]);
     }
 
     while (~hit) {
@@ -172,9 +199,10 @@ class Map {
     }
 
     if (side) {
-      let dist = side_dist_x;
+      // we overstepped by delta_dist, so need to correct
+      let dist = side_dist_x - delta_dist_x;
     } else {
-      let dist = side_dist_y;
+      let dist = side_dist_y - delta_dist_y;
     }
 
     let bitmask = 32;
