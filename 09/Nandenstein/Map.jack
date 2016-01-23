@@ -95,8 +95,15 @@ class Map {
   }
 
   method void update_pos(Fixed pos_x, Fixed pos_y, int dir) {
+    var Array cur_row;
     do pos_x.Add(0, cos_lut[dir]);
     do pos_y.Add(0, cos_lut[(dir + 64)&255]);
+    let cur_row = map[pos_y[0]];
+    if (cur_row[pos_x[0]]) {
+      // if collision, undo
+      do pos_x.Add(0, -cos_lut[dir]);
+      do pos_y.Add(0, -cos_lut[(dir + 64)&255]);
+    }
 
     return;
   }
