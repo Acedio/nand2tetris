@@ -222,6 +222,11 @@ class Map {
         if (tile_val = 1) {
           // wall
           let hit = true;
+          if (side) {
+            let wall_type[0] = 1;
+          } else {
+            let wall_type[0] = 0;
+          }
         }
         if (tile_val = 2) {
           // invertile
@@ -233,6 +238,12 @@ class Map {
               let effect_dist[0] = side_dist_y - delta_dist_y;
             }
             let effect[0] = 2;
+          } else {
+            // should show up as white if any other effect is applied
+            if (~(effect[0] = 2)) {
+              let hit = true;
+              let wall_type[0] = 4;
+            }
           }
         }
         if (tile_val = 3) {
@@ -252,8 +263,12 @@ class Map {
             }
             let effect[0] = 3;
           } else {
-            // shouldn't be able to see through mirror if an effect is already applied
-            let hit = true;
+            // should show up as white if any other effect is applied
+            if (~(effect[0] = 3)) {
+              // shouldn't be able to see through mirror if a different effect is already applied
+              let hit = true;
+              let wall_type[0] = 4;
+            }
           }
         }
       }
@@ -262,10 +277,8 @@ class Map {
     if (side) {
       // we overstepped by delta_dist, so need to correct
       let dist[0] = side_dist_x - delta_dist_x;
-      let wall_type[0] = 1;
     } else {
       let dist[0] = side_dist_y - delta_dist_y;
-      let wall_type[0] = 0;
     }
 
     return;
