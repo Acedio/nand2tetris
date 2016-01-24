@@ -196,10 +196,20 @@ class Map {
         let side_dist_x = side_dist_x + delta_dist_x;
         let map_x = map_x + step_x;
         let side = true;
+        if (side_dist_x > 8160) {
+          // 8160 is the max our distance to height converter can handle, so exit
+          let dist[0] = 8160;
+          let wall_type[0] = 0;
+        }
       } else {
         let side_dist_y = side_dist_y + delta_dist_y;
         let map_y = map_y + step_y;
         let side = false;
+        if (side_dist_y > 8160) {
+          // 8160 is the max our distance to height converter can handle, so exit
+          let dist[0] = 8160;
+          let wall_type[0] = 0;
+        }
       }
       let cur_row = map[map_y];
       let tile_val = cur_row[map_x];
