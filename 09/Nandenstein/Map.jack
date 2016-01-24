@@ -43,6 +43,8 @@ class Map {
     let cur_row[5] = 3;  // mirror
     let cur_row = map[3];
     let cur_row[3] = 2;  // invert
+    let cur_row[4] = 2;  // invert
+    let cur_row[5] = 1;
 
     let dd_lut = Array.new(256);
     do Luts.init_delta_dist(dd_lut);

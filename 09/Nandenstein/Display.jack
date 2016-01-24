@@ -227,7 +227,6 @@ class Display {
     }
 
     // deal with ceiling and floor effects
-    // erase old effects
     if (effect = 0) {
       // if we had an effect last frame, clear it
       if (last_effect_height < 128) {
@@ -235,8 +234,18 @@ class Display {
         do fill_down(last_frame_mem_bot[col], height - last_effect_height, color_floor);
       }
     } else {
-      do fill_up(fill_up(last_frame_mem_top[col], height - effect_height, color_ceil_effect), effect_height - last_effect_height, color_ceil);
-      do fill_down(fill_down(last_frame_mem_bot[col], height - effect_height, color_floor_effect), effect_height - last_effect_height, color_floor);
+      if (last_effect_height = 128) {
+        let last_frame_mem_ceil_effect[col] = last_frame_mem_top[col];
+        let last_frame_mem_floor_effect[col] = last_frame_mem_bot[col];
+        let last_effect_height = height;
+      }
+      if (effect_height > last_effect_height) {  // the effect has shrunk
+        let last_frame_mem_ceil_effect[col] = fill_down(last_frame_mem_ceil_effect[col], effect_height - last_effect_height, color_ceil);
+        let last_frame_mem_floor_effect[col] = fill_up(last_frame_mem_floor_effect[col], effect_height - last_effect_height, color_floor);
+      } else {  // the effect has grown
+        let last_frame_mem_ceil_effect[col] = fill_up(last_frame_mem_ceil_effect[col], last_effect_height - effect_height, color_ceil_effect);
+        let last_frame_mem_floor_effect[col] = fill_down(last_frame_mem_floor_effect[col], last_effect_height - effect_height, color_floor_effect);
+      }
     }
     return;
   }
