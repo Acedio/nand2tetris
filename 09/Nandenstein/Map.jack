@@ -38,6 +38,12 @@ class Map {
       let row = row + 1;
     }
 
+    let cur_row = map[0];
+    let cur_row[4] = 3;  // mirror
+    let cur_row[5] = 3;  // mirror
+    let cur_row = map[3];
+    let cur_row[3] = 2;  // exit
+
     let dd_lut = Array.new(256);
     do Luts.init_delta_dist(dd_lut);
 
@@ -104,7 +110,7 @@ class Map {
 
   // 0 <= dir < 256
   // dists.len = 32
-  method void trace_screen(Fixed pos_x, Fixed pos_y, Fixed camera_dir, Array dists, Array wall_types) {
+  method void trace_screen(Fixed pos_x, Fixed pos_y, Fixed camera_dir, Array dists, Array wall_types, Array exit_dists) {
     var Fixed theta;
     var int screen_x;
     // copy camera_dir so we don't screw it up
@@ -121,7 +127,7 @@ class Map {
       if (theta[0] > 255) {
         let theta[0] = theta[0] - 256;
       }
-      do trace(pos_x, pos_y, theta, dists + screen_x, wall_types + screen_x);
+      do trace(pos_x, pos_y, theta, dists + screen_x, wall_types + screen_x, exit_dists + screen_x);
       let screen_x = screen_x - 1;
     }
     do theta.dispose();
@@ -145,16 +151,19 @@ class Map {
     return sum;
   }
 
-  method void trace(Fixed pos_x, Fixed pos_y, Fixed dir, int dist, int wall_type) {
+  method void trace(Fixed pos_x, Fixed pos_y, Fixed dir, int dist, int wall_type, int exit_dist) {
     var boolean hit;
     var boolean side;
     var Array cur_row;
+    var int tile_val;
     var int map_x, map_y;
     var int step_x, step_y;
     var int dir_x, dir_y;  // dir_y is just dir_x rotated 90 degrees
     var int dist_shift;
     var int bitmask, addend;
 
+    // initial exit_dist is negative to indicate it shouldn't be used
+    let exit_dist[0] = -1;
     let hit = false;
 
     let map_x = pos_x[0];
@@ -193,8 +202,33 @@ class Map {
         let side = false;
       }
       let cur_row = map[map_y];
-      if (cur_row[map_x]) {
-        let hit = true;
+      let tile_val = cur_row[map_x];
+      if (tile_val) {
+        if (tile_val = 1) {
+          // wall
+          let hit = true;
+        }
+        if (tile_val = 2) {
+          // exit
+          if (side) {
+            // we overstepped by delta_dist, so need to correct
+            let exit_dist[0] = side_dist_x - delta_dist_x;
+          } else {
+            let exit_dist[0] = side_dist_y - delta_dist_y;
+          }
+        }
+        if (tile_val = 3) {
+          // mirror
+          if (side) {
+            // invert x
+            let step_x = -step_x;
+            let map_x = map_x + step_x;
+          } else {
+            // invert y
+            let step_y = -step_y;
+            let map_y = map_y + step_y;
+          }
+        }
       }
     }
 

@@ -4,7 +4,7 @@ class Display {
 
   // values are distance of the wall from the top of the screen. 0 = all wall, 128 = no wall
   field Array last_frame;
-  field Array last_frame_pattern;
+  field Array last_frame_color_wall;
   // LUT for height from distance
   field Array height_from_dist_lut;
 
@@ -19,7 +19,7 @@ class Display {
   constructor Display new() {
     let w = 32;
     let last_frame = Array.new(w);
-    let last_frame_pattern = Array.new(w);
+    let last_frame_color_wall = Array.new(w);
     let last_frame_mem_top = Array.new(w);
     let last_frame_mem_bot = Array.new(w);
 
@@ -38,7 +38,7 @@ class Display {
     let col = 0;
     while (col < w) {
       let last_frame[col] = 128;
-      let last_frame_pattern[col] = 1234;
+      let last_frame_color_wall[col] = 1234;
       // SCREEN = 16384 and is 8192 pixrows total
       let last_frame_mem_top[col] = 16384 + 4096 + col;  // middle of screen so wall off
       let last_frame_mem_bot[col] = 16384 + 4096 + col;  // middle of screen so wall off
@@ -60,30 +60,47 @@ class Display {
   }
 
   // next_frame should have len = w
-  method void draw(Array dists, Array wall_types) {
+  method void draw(Array dists, Array wall_types, Array exit_dists) {
     var int col;
     
     while (col < w) {
-      do draw_col(col, dists[col], wall_types[col]);
+      do draw_col(col, dists[col], wall_types[col], exit_dists[col]);
 
       let col = col + 1;
     }
     return;
   }
 
-  method void draw_col(int col, int dist, int wall_type) {
+  method void draw_col(int col, int dist, int wall_type, int exit_dist) {
     var int pixrow;  // memory address of the "pixel" that's actually 16 pixels wide
     var int rows;
     var int height;  // actually distance from top of screen
     var int last_height;
-    var int last_wall_type;
+    var int invert_height;
+    var int last_invert_height;
+    var int last_color_wall;
     var int bitmask, addend, dist_shift;
+    var int color_wall, color_wall_alt;
+    var int color_ceil, color_floor;
+
+    if (wall_type = 0) {
+      let color_wall = -1;
+      let color_wall_alt = -1;
+    } else {
+      if (wall_type = 1) {
+        let color_wall = 21845;
+        let color_wall_alt = -1;
+      }
+    }
+    let color_ceil = 0;
+    let color_floor = 21845;
 
     // first calculate wall height from distance
     let bitmask = 32;
     let addend = 1;
     let dist_shift = 0;
 
+    // shift the distance right 5 bits to fit within the 256 values
     while (addend < 256) {
       if (dist & bitmask) {
         let dist_shift = dist_shift + addend;
@@ -93,47 +110,69 @@ class Display {
     }
     let height = height_from_dist_lut[dist_shift];
 
+    // calculate invert height from distance
+    if (exit_dist > -1) {
+      let color_wall = ~color_wall;
+      let color_wall_alt = ~color_wall_alt;
+      /*
+      let bitmask = 32;
+      let addend = 1;
+      let dist_shift = 0;
+
+      // shift the distance right 5 bits to fit within the 256 values
+      while (addend < 256) {
+        if (exit_dist & bitmask) {
+          let dist_shift = dist_shift + addend;
+        }
+        let bitmask = bitmask + bitmask;
+        let addend = addend + addend;
+      }
+      let invert_height = height_from_dist_lut[dist_shift];
+      */
+    } else {
+      let invert_height = 128;
+    }
+
     let last_height = last_frame[col];
     let last_frame[col] = height;
-    let last_wall_type = last_frame_pattern[col];
-    let last_frame_pattern[col] = wall_type;
+    let last_color_wall = last_frame_color_wall[col];
+    let last_frame_color_wall[col] = color_wall;
     if (height < last_height) {
       // new wall is bigger, draw extra wall
       let rows = last_height - height;
       let pixrow = last_frame_mem_top[col];
-      if (wall_type) {
-        let last_frame_mem_top[col] = fill_up_alt(pixrow, rows, 21845);
+      if (color_wall = color_wall_alt) {
+        let last_frame_mem_top[col] = fill_up(pixrow, rows, color_wall);
       } else {
-        let last_frame_mem_top[col] = fill_up(pixrow, rows, -1);
+        let last_frame_mem_top[col] = fill_up_alt(pixrow, rows, color_wall, color_wall_alt);
       }
-      if (~(last_wall_type = wall_type)) {
-        if (wall_type) {
-          do fill_down_alt(pixrow, 256 - (last_height + last_height), 21845);
+      if (~(color_wall = last_color_wall)) {
+        if (color_wall = color_wall_alt) {
+          do fill_down(pixrow, 256 - (last_height + last_height), color_wall);
         } else {
-          do fill_down(pixrow, 256 - (last_height + last_height), -1);
+          do fill_down_alt(pixrow, 256 - (last_height + last_height), color_wall, color_wall_alt);
         }
       }
       let pixrow = last_frame_mem_bot[col];
-      if (wall_type) {
-        let last_frame_mem_bot[col] = fill_down_alt(pixrow, rows, 21845);
+      if (color_wall = color_wall_alt) {
+        let last_frame_mem_bot[col] = fill_down(pixrow, rows, color_wall);
       } else {
-        let last_frame_mem_bot[col] = fill_down(pixrow, rows, -1);
+        let last_frame_mem_bot[col] = fill_down_alt(pixrow, rows, color_wall, color_wall_alt);
       }
     } else {
       // new wall is smaller, erase extra wall
       let rows = height - last_height;
       let pixrow = last_frame_mem_top[col];
-      let last_frame_mem_top[col] = fill_down(pixrow, rows, 0);
-      if (~(last_wall_type = wall_type)) {
-        if (wall_type) {
-          do fill_down_alt(last_frame_mem_top[col], 256 - (height + height), 21845);
+      let last_frame_mem_top[col] = fill_down(pixrow, rows, color_ceil);
+      if (~(color_wall = last_color_wall)) {
+        if (color_wall = color_wall_alt) {
+          do fill_down(last_frame_mem_top[col], 256 - (height + height), color_wall);
         } else {
-          do fill_down(last_frame_mem_top[col], 256 - (height + height), -1);
+          do fill_down_alt(last_frame_mem_top[col], 256 - (height + height), color_wall, color_wall_alt);
         }
       }
       let pixrow = last_frame_mem_bot[col];
-      // Floor pattern = 21845
-      let last_frame_mem_bot[col] = fill_up(pixrow, rows, 21845);
+      let last_frame_mem_bot[col] = fill_up(pixrow, rows, color_floor);
     }
     return;
   }
@@ -151,8 +190,8 @@ class Display {
     return start;
   }
 
-  // Alternates between black and the given pattern
-  method int fill_up_alt(int start, int rows, int fill_val) {
+  // Alternates between two given patterns
+  method int fill_up_alt(int start, int rows, int fill_val, int alt_fill_val) {
     var int row;
     let row = 0;
     while (row < rows) {
@@ -160,7 +199,7 @@ class Display {
       if (start & 32) {
         let start[0] = fill_val;
       } else {
-        let start[0] = -1;
+        let start[0] = alt_fill_val;
       }
       let row = row + 1;
     }
@@ -181,14 +220,14 @@ class Display {
   }
 
   // Alternates between black and the given pattern
-  method int fill_down_alt(int start, int rows, int fill_val) {
+  method int fill_down_alt(int start, int rows, int fill_val, int alt_fill_val) {
     var int row;
     let row = 0;
     while (row < rows) {
       if (start & 32) {
         let start[0] = fill_val;
       } else {
-        let start[0] = -1;
+        let start[0] = alt_fill_val;
       }
       let start = start + 32; // one row down
       let row = row + 1;
