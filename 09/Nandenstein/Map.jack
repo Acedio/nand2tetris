@@ -28,7 +28,7 @@ class Map {
 
       let col = 0;
       while (col < w) {
-        if (((col = row) & (col & 1)) | (col = 0) | (row = 0) | (col = (w - 1)) | (row = (h - 1))) {
+        if ((col = 0) | (row = 0) | (col = (w - 1)) | (row = (h - 1))) {
           let cur_row[col] = 1;
         } else {
           let cur_row[col] = 0;
@@ -38,11 +38,11 @@ class Map {
       let row = row + 1;
     }
 
-    let cur_row = map[0];
+    let cur_row = map[15];
     let cur_row[4] = 3;  // mirror
     let cur_row[5] = 3;  // mirror
     let cur_row = map[3];
-    let cur_row[3] = 2;  // exit
+    let cur_row[3] = 2;  // invert
 
     let dd_lut = Array.new(256);
     do Luts.init_delta_dist(dd_lut);
@@ -235,16 +235,24 @@ class Map {
         }
         if (tile_val = 3) {
           // mirror
-          if (side) {
-            // invert x
-            let step_x = -step_x;
-            let map_x = map_x + step_x;
+          if (effect[0] = 0) {
+            if (side) {
+              // invert x
+              let step_x = -step_x;
+              let map_x = map_x + step_x;
+              // we overstepped by delta_dist, so need to correct
+              let effect_dist[0] = side_dist_x - delta_dist_x;
+            } else {
+              // invert y
+              let step_y = -step_y;
+              let map_y = map_y + step_y;
+              let effect_dist[0] = side_dist_y - delta_dist_y;
+            }
+            let effect[0] = 3;
           } else {
-            // invert y
-            let step_y = -step_y;
-            let map_y = map_y + step_y;
+            // shouldn't be able to see through mirror if an effect is already applied
+            let hit = true;
           }
-          let effect[0] = 3;
         }
       }
     }
