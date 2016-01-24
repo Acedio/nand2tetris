@@ -60,18 +60,18 @@ class Display {
   }
 
   // next_frame should have len = w
-  method void draw(Array dists, Array wall_types, Array exit_dists) {
+  method void draw(Array dists, Array wall_types, Array effect_dists, Array effects) {
     var int col;
     
     while (col < w) {
-      do draw_col(col, dists[col], wall_types[col], exit_dists[col]);
+      do draw_col(col, dists[col], wall_types[col], effect_dists[col], effects[col]);
 
       let col = col + 1;
     }
     return;
   }
 
-  method void draw_col(int col, int dist, int wall_type, int exit_dist) {
+  method void draw_col(int col, int dist, int wall_type, int effect_dist, int effect) {
     var int pixrow;  // memory address of the "pixel" that's actually 16 pixels wide
     var int rows;
     var int height;  // actually distance from top of screen
@@ -111,7 +111,7 @@ class Display {
     let height = height_from_dist_lut[dist_shift];
 
     // calculate invert height from distance
-    if (exit_dist > -1) {
+    if (~(effect = 0)) {
       let color_wall = ~color_wall;
       let color_wall_alt = ~color_wall_alt;
       /*
@@ -121,7 +121,7 @@ class Display {
 
       // shift the distance right 5 bits to fit within the 256 values
       while (addend < 256) {
-        if (exit_dist & bitmask) {
+        if (effect_dist & bitmask) {
           let dist_shift = dist_shift + addend;
         }
         let bitmask = bitmask + bitmask;

@@ -110,7 +110,7 @@ class Map {
 
   // 0 <= dir < 256
   // dists.len = 32
-  method void trace_screen(Fixed pos_x, Fixed pos_y, Fixed camera_dir, Array dists, Array wall_types, Array exit_dists) {
+  method void trace_screen(Fixed pos_x, Fixed pos_y, Fixed camera_dir, Array dists, Array wall_types, Array effect_dists, Array effects) {
     var Fixed theta;
     var int screen_x;
     // copy camera_dir so we don't screw it up
@@ -127,7 +127,7 @@ class Map {
       if (theta[0] > 255) {
         let theta[0] = theta[0] - 256;
       }
-      do trace(pos_x, pos_y, theta, dists + screen_x, wall_types + screen_x, exit_dists + screen_x);
+      do trace(pos_x, pos_y, theta, dists + screen_x, wall_types + screen_x, effect_dists + screen_x, effects + screen_x);
       let screen_x = screen_x - 1;
     }
     do theta.dispose();
@@ -151,7 +151,9 @@ class Map {
     return sum;
   }
 
-  method void trace(Fixed pos_x, Fixed pos_y, Fixed dir, int dist, int wall_type, int exit_dist) {
+  method void trace(Fixed pos_x, Fixed pos_y, Fixed dir,
+                    int dist /* pointer */, int wall_type /* pointer */,
+                    int effect_dist /* pointer */, int effect /* pointer */) {
     var boolean hit;
     var boolean side;
     var Array cur_row;
@@ -162,8 +164,9 @@ class Map {
     var int dist_shift;
     var int bitmask, addend;
 
-    // initial exit_dist is negative to indicate it shouldn't be used
-    let exit_dist[0] = -1;
+    // initial effect_dist is negative to indicate it shouldn't be used
+    let effect_dist[0] = -1;
+    let effect[0] = 0;
     let hit = false;
 
     let map_x = pos_x[0];
@@ -219,12 +222,15 @@ class Map {
           let hit = true;
         }
         if (tile_val = 2) {
-          // exit
-          if (side) {
-            // we overstepped by delta_dist, so need to correct
-            let exit_dist[0] = side_dist_x - delta_dist_x;
-          } else {
-            let exit_dist[0] = side_dist_y - delta_dist_y;
+          // invertile
+          if (effect[0] = 0) {
+            if (side) {
+              // we overstepped by delta_dist, so need to correct
+              let effect_dist[0] = side_dist_x - delta_dist_x;
+            } else {
+              let effect_dist[0] = side_dist_y - delta_dist_y;
+            }
+            let effect[0] = 2;
           }
         }
         if (tile_val = 3) {
@@ -238,6 +244,7 @@ class Map {
             let step_y = -step_y;
             let map_y = map_y + step_y;
           }
+          let effect[0] = 3;
         }
       }
     }
