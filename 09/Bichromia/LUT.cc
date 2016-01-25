@@ -299,8 +299,20 @@ void print_levels() {
   printf("  }\n");
 }
 
+void print_bits() {
+  printf("  function void init_bits(Array lut) {\n");
+  int i = 0;
+  int values = 15;
+  for (i = 0; i < values; ++i) {
+    printf("    let lut[%d] = %d;\n", i, 1 << i);
+  }
+  // special case 15
+  printf("    let lut[15] = ~32767;\n");
+  printf("    return;\n  }\n\n");
+}
+
 void print_delta_distance() {
-  printf("  function void init_delta_dist(Array lut) {\n");
+  printf("  function void init_delta_dist(Array lut, Array low_bits) {\n");
   int i = 0;
   int values = 256;  // number of discrete angles
   for (i = 0; i < values; ++i) {
@@ -309,6 +321,13 @@ void print_delta_distance() {
     double value = sqrt(1.0 + (sin(theta) * sin(theta)) / (cos(theta) * cos(theta)));
     int int_val = 256 * value;
     printf("    let lut[%d] = %d;\n", i, int_val & 0xFFFF);
+    // We want to know where the 7 most important bits are so we can multiply
+    // with higher precision
+    int hob = 0;
+    while (int_val >>= 1) {
+      ++hob;
+    }
+    printf("    let low_bits[%d] = %d;\n", i, hob - 6);
   }
   printf("    return;\n  }\n\n");
 }
@@ -362,6 +381,7 @@ void print_cos() {
 
 int main() {
   printf("class Luts {\n");
+  print_bits();
   print_delta_distance();
   print_x_angle();
   print_height_from_dist();

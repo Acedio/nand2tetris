@@ -1,8 +1,11 @@
 class Map {
   // multi-dimension array ([row][column]) because multiplication is expensive
   field Array map;
-  // LUT for delta distance values
+  // LUT for bit locations
+  field Array bit_lut;
+  // LUT for delta distance values. dd_high_masks is used to determine which bits to multiply
   field Array dd_lut;
+  field Array dd_low_bits;
   // LUT for angle changes between x screen columns
   field Array x_angle_lut_hi;
   field Array x_angle_lut_lo;
@@ -48,8 +51,12 @@ class Map {
     let cur_row[4] = 2;  // invert
     let cur_row[5] = 1;
 
+    let bit_lut = Array.new(16);
+    do Luts.init_bits(bit_lut);
+
     let dd_lut = Array.new(256);
-    do Luts.init_delta_dist(dd_lut);
+    let dd_low_bits = Array.new(256);
+    do Luts.init_delta_dist(dd_lut, dd_low_bits);
 
     let x_angle_lut_hi = Array.new(32);
     let x_angle_lut_lo = Array.new(32);
@@ -216,24 +223,44 @@ class Map {
     return;
   }
 
-  // BUG: There's an flaw in tb_mul in that smaller values of "top" will produce less accurate results.
-  //      There should likely be a mask input so that we always start the multiplication at the bits that "matter" in top.
-  //      This is the cause, I believe, of the juttering as you approach a wall diagonally.
-  function int tb_mul(int top, int bot) {
-    var int mask;
+  // In order to maintain accuracy even at low values of top, this multiplication method takes low_bit to
+  // indicate where it should start multiplying (the bottom of the 7 bits that are multiplied).
+  // After multiplication, we shift to get rid of the fractional value in the fixed-point output.
+  method int tb_mul(int top, int low_bit, int bot) {
     var int sum;
-    
-    let mask = 256;
+    var int src_mask;
+    var int dst_mask;
+    var int bit;
+    var int shifted;
 
-    while (mask > 0) {
-      if (mask & top) {
+    let src_mask = bit_lut[low_bit];
+    let bit = 0;
+    
+    while (bit < 7) {
+      if (src_mask & top) {
         let sum = sum + bot;
       }
       let bot = bot + bot;
-      let mask = mask + mask;
+      let src_mask = src_mask + src_mask;
+      let bit = bit + 1;
     }
 
-    return sum;
+    // We have our sum, now we need to shift it down.
+    // The fixed point is at bit 8 - low_bit (i.e. as the low bit gets lower, the fixed point gets higher)
+
+    let src_mask = bit_lut[8 - low_bit];
+    let shifted = 0;
+    let dst_mask = 1;
+
+    while (src_mask > 0) {
+      if (src_mask & sum) {
+        let shifted = shifted | dst_mask;
+      }
+      let dst_mask = dst_mask + dst_mask;
+      let src_mask = src_mask + src_mask;
+    }
+
+    return shifted;
   }
 
   method void trace(Fixed pos_x, Fixed pos_y, Fixed dir,
@@ -266,17 +293,17 @@ class Map {
     if ((dir[0] < 64) | (dir[0] > 192)) {
       let step_x = 1;
       // have already traveled a fraction of the way towards the next x
-      let side_dist_x = Map.tb_mul(delta_dist_x, 255 - pos_x[1]);
+      let side_dist_x = tb_mul(delta_dist_x, dd_low_bits[dir_x], 255 - pos_x[1]);
     } else {
       let step_x = -1;
-      let side_dist_x = Map.tb_mul(delta_dist_x, pos_x[1]);
+      let side_dist_x = tb_mul(delta_dist_x, dd_low_bits[dir_x], pos_x[1]);
     }
     if (dir[0] > 128) {
       let step_y = 1;
-      let side_dist_y = Map.tb_mul(delta_dist_y, 255 - pos_y[1]);
+      let side_dist_y = tb_mul(delta_dist_y, dd_low_bits[dir_y], 255 - pos_y[1]);
     } else {
       let step_y = -1;
-      let side_dist_y = Map.tb_mul(delta_dist_y, pos_y[1]);
+      let side_dist_y = tb_mul(delta_dist_y, dd_low_bits[dir_y], pos_y[1]);
     }
 
     while (~hit) {
