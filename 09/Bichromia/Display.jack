@@ -22,9 +22,11 @@ class Display {
   field Array last_frame_mem_floor_effect;
 
   field int w;
+  field int door_color;
 
   constructor Display new() {
     let w = 32;
+    let door_color = 0;
     let last_frame_height = Array.new(w);
     let last_frame_color_wall = Array.new(w);
     let last_frame_mem_top = Array.new(w);
@@ -83,6 +85,14 @@ class Display {
   // next_frame should have len = w
   method void draw(Array dists, Array wall_types, Array effect_dists, Array effects, int frame) {
     var int col;
+
+    if ((frame & 7) = 0) {
+      if (frame & 8) {
+        let door_color = 0;
+      } else {
+        let door_color = ~21845;  // working around the alt color bug :P
+      }
+    }
     
     while (col < w) {
       do draw_col(col, dists[col], wall_types[col], effect_dists[col], effects[col], frame);
@@ -122,8 +132,8 @@ class Display {
           let color_wall_alt = 0;
         }
         if (wall_type = 5) {  // door
-          let color_wall = frame;
-          let color_wall_alt = frame;
+          let color_wall = door_color;
+          let color_wall_alt = 0;
         }
       }
     }
