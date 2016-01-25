@@ -11,7 +11,7 @@ class Main {
     var Array effects;
     var int frame;
 
-    let frame = 0;
+    let frame = 7;
     let pos_x = Fixed.new(2, 0);
     let pos_y = Fixed.new(8, 0);
     let camera_dir = Fixed.new(64, 0);
@@ -48,9 +48,10 @@ class Main {
       if (key = 133) {  // down
         do map.update_pos(pos_x, pos_y, (128 + camera_dir[0]) & 255);
       }
-      let frame = frame + frame;
-      if (frame = 0) {
-        let frame = 1;
+      if (frame & (~32767)) {
+        let frame = frame + frame + 1;
+      } else {
+        let frame = frame + frame;
       }
     }
     // dispose()s would go here, but we'll never reach them so whatever :P
