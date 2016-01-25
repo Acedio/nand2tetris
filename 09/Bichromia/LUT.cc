@@ -267,7 +267,7 @@ void print_height_from_dist() {
   int i = 0;
   int values = 256;  // furthest possible dist (eh)
   for (i = 0; i < values; ++i) {
-    double height = 32.0 * 200.0 / (i + 1);
+    double height = 32.0 * 130.0 / (i + 1);
     if (height > 256) height = 256;
     double from_top = (256.0 - height) / 2;
     int int_val = from_top;
