@@ -204,6 +204,9 @@ class Map {
     return;
   }
 
+  // BUG: There's an flaw in tb_mul in that smaller values of "top" will produce less accurate results.
+  //      There should likely be a mask input so that we always start the multiplication at the bits that "matter" in top.
+  //      This is the cause, I believe, of the juttering as you approach a wall diagonally.
   function int tb_mul(int top, int bot) {
     var int mask;
     var int sum;
