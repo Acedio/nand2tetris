@@ -852,7 +852,7 @@ class Luts {
     let rows = Array.new(16);
     if (num = 0) {
       let rows[0] = ~4096;
-      let rows[1] = ~32638;
+      let rows[1] = ~32574;
       let rows[2] = ~32638;
       let rows[3] = ~32638;
       let rows[4] = ~6168;
@@ -866,8 +866,10 @@ class Luts {
       let rows[12] = ~6654;
       let rows[13] = 1537;
       let rows[14] = ~31230;
-      let rows[15] = ~0;
+      let rows[15] = ~16;
       do map.load_rows(rows);
+      do map.set_tile(6, 1, 16385);
+      do map.set_tile(4, 15, ~30588);
       do map.set_tile(15, 13, ~29053);
       do map.set_tile(12, 0, ~6398);
     }
@@ -943,6 +945,38 @@ class Luts {
       do map.set_tile(9, 8, 2);
       do map.set_tile(0, 4, ~3710);
       do map.set_tile(0, 13, ~2431);
+    }
+    if (num = 3) {
+      let rows[0] = ~2;
+      let rows[1] = ~28662;
+      let rows[2] = ~28662;
+      let rows[3] = ~27702;
+      let rows[4] = ~32702;
+      let rows[5] = ~32702;
+      let rows[6] = ~3072;
+      let rows[7] = ~4030;
+      let rows[8] = ~4030;
+      let rows[9] = ~25014;
+      let rows[10] = ~28598;
+      let rows[11] = ~28598;
+      let rows[12] = ~28038;
+      let rows[13] = ~32254;
+      let rows[14] = ~32254;
+      let rows[15] = ~0;
+      do map.load_rows(rows);
+      do map.set_tile(13, 0, 3);
+      do map.set_tile(14, 0, 3);
+      do map.set_tile(6, 4, 3);
+      do map.set_tile(6, 5, 3);
+      do map.set_tile(1, 6, 2);
+      do map.set_tile(2, 6, 2);
+      do map.set_tile(13, 7, 16392);
+      do map.set_tile(14, 7, 16392);
+      do map.set_tile(13, 8, 16392);
+      do map.set_tile(14, 8, 16392);
+      do map.set_tile(10, 9, 2);
+      do map.set_tile(11, 9, 2);
+      do map.set_tile(1, 0, ~22783);
     }
     do rows.dispose();
     return;
