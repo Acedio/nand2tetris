@@ -1,5 +1,6 @@
 class Main {
   function void main() {
+    var boolean running;
     var int key;
     var Map map;
     var Display display;
@@ -11,6 +12,7 @@ class Main {
     var Array effects;
     var int frame;
 
+    let running = true;
     let frame = 7;
     let pos_x = Fixed.new(2, 0);
     let pos_y = Fixed.new(2, 0);
@@ -26,7 +28,7 @@ class Main {
     do Output.moveCursor(0,0);
 
     let display = Display.new();
-    while (true) {
+    while (running) {
       do map.trace_screen(pos_x, pos_y, camera_dir, dists, wall_types, effect_dists, effects);
       do display.draw(dists, wall_types, effect_dists, effects, frame);
       let key = Keyboard.keyPressed();
@@ -48,9 +50,16 @@ class Main {
       if (key = 133) {  // down
         do map.update_pos(pos_x, pos_y, (128 + camera_dir[0]) & 255);
       }
+      if (map.get_secrets() = 6) {
+        let running = false;
+      }
       let frame = frame + 1;
     }
-    // dispose()s would go here, but we'll never reach them so whatever :P
+    // dispose()s would go here, but eh
+    do Output.moveCursor(10, 19);
+    do Output.printString("You found all the secrets!");
+    do Output.moveCursor(11, 20);
+    do Output.printString("Thank you for playing :D");
 
     return;
   }

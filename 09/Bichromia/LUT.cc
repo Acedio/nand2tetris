@@ -12,7 +12,8 @@ enum class TileType {
   INVERTILE = 2,
   MIRROR = 3,
   WHITE = 4,
-  DOOR = 5
+  DOOR = 5,
+  SECRET = 6
 };
 
 struct Tile {
@@ -38,6 +39,8 @@ TileType char_to_type(char c) {
       return TileType::MIRROR;
     case 'w':
       return TileType::WHITE;
+    case 's':
+      return TileType::SECRET;
   }
   return TileType::UNKNOWN;
 }
@@ -109,7 +112,13 @@ void print_level(const Level& level) {
   }
   printf("      do map.load_rows(rows);\n");
   for (const Tile t : specials) {
-    printf("      do map.set_tile(%d, %d, %d);\n", t.x, t.y, t.type);
+    if (t.type == TileType::SECRET) {
+      // Print the secret (0x4000 with the flag for this room)
+      printf("      do map.set_tile(%d, %d, %d);\n", t.x, t.y,
+             (1 << 14) | (1 << level.number));
+    } else {
+      printf("      do map.set_tile(%d, %d, %d);\n", t.x, t.y, t.type);
+    }
   }
   bool link_error = false;
   std::vector<Link> links = level.links;
@@ -203,23 +212,24 @@ void print_levels() {
 
   print_level({1, 16, 16,
               "################"
-              "####           #"
-              "#              #"
-              "#              #"
-              "#  #           #"
-              "#  #           #"
-              "#  ########### #"
+              "######m##m##m###"
+              "#####          #"
+              "#              *"
+              "#  ##          #"
+              "#  ###m##m##m###"
+              "#  #############"
               "#            m #"
               "#            m #"
               "####  #####  m #"
-              "####  ### #  m #"
+              "####  ###s#  m #"
               "#         #  # #"
               "#  #  #  ##  ###"
               "#        #     #"
               "#        #     #"
               "#mmmmmmmm###*###",
               {
-                {12, 15, 0, 12, 1}
+                {12, 15, 0, 12, 1},
+                {15, 3, 2, 1, 4}
               }});
 
   print_level({2, 16, 16,
@@ -227,11 +237,11 @@ void print_levels() {
               "#              #"
               "# #  #  #  #  w#"
               "#              #"
+              "*             s#"
               "#              #"
               "# #  #  #  #  w#"
               "#              #"
               "#!!!!!!!!!######"
-              "#         #    #"
               "#         #    #"
               "#         #    #"
               "#######  ##    #"
@@ -240,7 +250,8 @@ void print_levels() {
               "#        #     #"
               "################",
               {
-                {0, 13, 0, 14, 13}
+                {0, 13, 0, 14, 13},
+                {0, 4, 1, 14, 3}
               }});
 
   printf("    do rows.dispose();\n");

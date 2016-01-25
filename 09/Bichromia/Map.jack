@@ -13,12 +13,14 @@ class Map {
   field int side_dist_x, side_dist_y;
 
   field int w, h;
+  field int secrets;
 
   constructor Map new(int Width, int Height) {
     var int row, col;
     var Array cur_row;
     let w = Width;
     let h = Height;
+    let secrets = 0;  // oooooooh
 
     let map = Array.new(h);
     let row = 0;
@@ -157,6 +159,10 @@ class Map {
     return door & 127;  // grab 7 lowest bits
   }
 
+  method int get_secrets() {  // ooooooooooooooh
+    return secrets;
+  }
+
   method void update_pos(Fixed pos_x, Fixed pos_y, int dir) {
     var Array cur_row;
     var int tile_val;
@@ -170,9 +176,15 @@ class Map {
         let pos_x[0] = Map.get_dest_x(tile_val);
         let pos_y[0] = Map.get_dest_y(tile_val);
       } else {
-        // if collision, undo
-        do pos_x.Add(0, -cos_lut[dir]);
-        do pos_y.Add(0, -cos_lut[(dir + 64)&255]);
+        if (tile_val & 16384) {  // secret area!
+          do Output.moveCursor(11, 28);
+          do Output.printString("Secret!!");
+          let secrets = secrets | (tile_val & 16383);
+        } else {
+          // if collision, undo
+          do pos_x.Add(0, -cos_lut[dir]);
+          do pos_y.Add(0, -cos_lut[(dir + 64)&255]);
+        }
       }
     }
     return;
