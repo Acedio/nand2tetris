@@ -204,7 +204,7 @@ class Map {
     return;
   }
 
-  method int tb_mul(int top, int bot) {
+  function int tb_mul(int top, int bot) {
     var int mask;
     var int sum;
     
@@ -251,17 +251,17 @@ class Map {
     if ((dir[0] < 64) | (dir[0] > 192)) {
       let step_x = 1;
       // have already traveled a fraction of the way towards the next x
-      let side_dist_x = tb_mul(delta_dist_x, 255 - pos_x[1]);
+      let side_dist_x = Map.tb_mul(delta_dist_x, 255 - pos_x[1]);
     } else {
       let step_x = -1;
-      let side_dist_x = tb_mul(delta_dist_x, pos_x[1]);
+      let side_dist_x = Map.tb_mul(delta_dist_x, pos_x[1]);
     }
     if (dir[0] > 128) {
       let step_y = 1;
-      let side_dist_y = tb_mul(delta_dist_y, 255 - pos_y[1]);
+      let side_dist_y = Map.tb_mul(delta_dist_y, 255 - pos_y[1]);
     } else {
       let step_y = -1;
-      let side_dist_y = tb_mul(delta_dist_y, pos_y[1]);
+      let side_dist_y = Map.tb_mul(delta_dist_y, pos_y[1]);
     }
 
     while (~hit) {
