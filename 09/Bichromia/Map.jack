@@ -64,7 +64,40 @@ class Map {
     do dd_lut.dispose();
     do x_angle_lut_hi.dispose();
     do x_angle_lut_lo.dispose();
+    do cos_lut.dispose();
     do Memory.deAlloc(this);
+    return;
+  }
+
+  method void load_rows(Array rows) {
+    var int row;
+    var int col;
+    var int mask;
+    var Array cur_row;
+    let row = 0;
+    let col = 0;
+    while (row < 16) {
+      let cur_row = map[row];
+      let col = 0;
+      let mask = 1;
+      while (col < 16) {
+        if (rows[row] & mask) {
+          let cur_row[col] = 1;
+        } else {
+          let cur_row[col] = 0;
+        }
+        let col = col + 1;
+        let mask = mask + mask;
+      }
+      let row = row + 1;
+    }
+    return;
+  }
+
+  method void set_tile(int x, int y, int type) {
+    var Array cur_row;
+    let cur_row = map[y];
+    let cur_row[x] = type;
     return;
   }
 
@@ -96,17 +129,52 @@ class Map {
     return;
   }
 
+  function int grab_bits(int val, int bits, int src_bit) {
+    var int shifted;
+    var int tgt_bit;
+    let shifted = 0;
+    let tgt_bit = 1;
+    while (bits > 0) {
+      if (src_bit & val) {
+        let shifted = shifted | tgt_bit;
+      }
+      let src_bit = src_bit + src_bit;
+      let tgt_bit = tgt_bit + tgt_bit;
+      let bits = bits - 1;
+    }
+    return shifted;
+  }
+
+  function int get_dest_x(int door) {
+    return Map.grab_bits(door, 4, 2048);  // grab bits 11 through 14
+  }
+
+  function int get_dest_y(int door) {
+    return Map.grab_bits(door, 4, 128);  // grab bits 7 through 10
+  }
+
+  function int get_dest_level(int door) {
+    return door & 127;  // grab 7 lowest bits
+  }
+
   method void update_pos(Fixed pos_x, Fixed pos_y, int dir) {
     var Array cur_row;
+    var int tile_val;
     do pos_x.Add(0, cos_lut[dir]);
     do pos_y.Add(0, cos_lut[(dir + 64)&255]);
     let cur_row = map[pos_y[0]];
-    if (cur_row[pos_x[0]]) {
-      // if collision, undo
-      do pos_x.Add(0, -cos_lut[dir]);
-      do pos_y.Add(0, -cos_lut[(dir + 64)&255]);
+    let tile_val = cur_row[pos_x[0]];
+    if (tile_val) {
+      if (tile_val & ~32767) {  // hit door
+        do Luts.load_level(this, Map.get_dest_level(tile_val));
+        let pos_x[0] = Map.get_dest_x(tile_val);
+        let pos_y[0] = Map.get_dest_y(tile_val);
+      } else {
+        // if collision, undo
+        do pos_x.Add(0, -cos_lut[dir]);
+        do pos_y.Add(0, -cos_lut[(dir + 64)&255]);
+      }
     }
-
     return;
   }
 
@@ -270,6 +338,14 @@ class Map {
               let wall_type[0] = 4;
             }
           }
+        }
+        if (tile_val = 4) {
+          let hit = true;
+          let wall_type[0] = 4;  // white type
+        }
+        if (tile_val & ~32767) {
+          let hit = true;
+          let wall_type[0] = 5;  // door type
         }
       }
     }

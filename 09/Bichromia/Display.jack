@@ -121,6 +121,10 @@ class Display {
           let color_wall = 0;
           let color_wall_alt = 0;
         }
+        if (wall_type = 5) {
+          let color_wall = 21845;
+          let color_wall_alt = ~21845;
+        }
       }
     }
     let color_ceil = 0;

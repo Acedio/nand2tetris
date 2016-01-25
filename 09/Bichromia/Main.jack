@@ -19,8 +19,7 @@ class Main {
     let effects = Array.new(32);
 
     let map = Map.new(16,16);
-    //do map.print();
-    do Output.printInt(map.at(4, 4));
+    do Luts.load_level(map, 0);
 
     do Output.moveCursor(0,0);
 
@@ -28,10 +27,7 @@ class Main {
     while (true) {
       do map.trace_screen(pos_x, pos_y, camera_dir, dists, wall_types, effect_dists, effects);
       do display.draw(dists, wall_types, effect_dists, effects);
-      let key = 0;
-      while (key = 0) {
-        let key = Keyboard.keyPressed();
-      }
+      let key = Keyboard.keyPressed();
       if (key = 130) {  // left
         let camera_dir[0] = camera_dir[0] + 3;
         if (camera_dir[0] > 255) {
