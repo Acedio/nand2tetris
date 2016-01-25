@@ -56,6 +56,8 @@ struct Level {
 };
 
 int format_link(const Link& link) {
+  // 1 and 15 rather than 0 and 16 because we want to make sure we warp within
+  // the walls
   assert(link.nx >= 1);
   assert(link.nx < 15);
   assert(link.ny >= 1);
@@ -153,6 +155,30 @@ void print_levels() {
   printf("  function void load_level(Map map, int num) {\n");
   printf("    var Array rows;\n");
   printf("    let rows = Array.new(16);\n");
+  
+  /*
+  // Template
+  print_level({0, 16, 16,
+              "################"
+              "#              #"
+              "#              #"
+              "#              #"
+              "#              #"
+              "#              #"
+              "#              #"
+              "#              #"
+              "#              #"
+              "#              #"
+              "#              #"
+              "#              #"
+              "#              #"
+              "#              #"
+              "#              #"
+              "################",
+              {
+                // links go here
+              }});
+  */
 
   print_level({0, 16, 16,
               "##mmm##w#w######"
@@ -171,7 +197,30 @@ void print_levels() {
               "#              #"
               "#              #"
               "################",
-              {{10, 4, 0, 2, 2}}});
+              {
+                {10, 4, 1, 8, 14}
+              }});
+
+  print_level({1, 16, 16,
+              "################"
+              "#              #"
+              "#              #"
+              "#              #"
+              "#   #!   !#    #"
+              "#   #     #    #"
+              "#   #     #    #"
+              "#   #     #    #"
+              "#   #     #    #"
+              "#   ###*###    #"
+              "#   #######    #"
+              "#              #"
+              "#              #"
+              "#              #"
+              "#              #"
+              "################",
+              {
+                {7, 9, 0, 8, 14}
+              }});
 
   printf("    do rows.dispose();\n");
   printf("    return;\n");

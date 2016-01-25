@@ -882,7 +882,30 @@ class Luts {
       do map.set_tile(9, 10, 4);
       do map.set_tile(11, 11, 4);
       do map.set_tile(9, 12, 4);
-      do map.set_tile(10, 4, ~28415);
+      do map.set_tile(10, 4, ~14590);
+    }
+    if (num = 1) {
+      let rows[0] = ~0;
+      let rows[1] = ~32766;
+      let rows[2] = ~32766;
+      let rows[3] = ~32766;
+      let rows[4] = ~31182;
+      let rows[5] = ~31726;
+      let rows[6] = ~31726;
+      let rows[7] = ~31726;
+      let rows[8] = ~31726;
+      let rows[9] = ~30862;
+      let rows[10] = ~30734;
+      let rows[11] = ~32766;
+      let rows[12] = ~32766;
+      let rows[13] = ~32766;
+      let rows[14] = ~32766;
+      let rows[15] = ~0;
+      do map.load_rows(rows);
+      do map.set_tile(5, 4, 2);
+      do map.set_tile(9, 4, 2);
+      do map.set_tile(7, 9, 5);
+      do map.set_tile(7, 9, ~14591);
     }
     do rows.dispose();
     return;

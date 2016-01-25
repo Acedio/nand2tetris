@@ -81,18 +81,18 @@ class Display {
   }
 
   // next_frame should have len = w
-  method void draw(Array dists, Array wall_types, Array effect_dists, Array effects) {
+  method void draw(Array dists, Array wall_types, Array effect_dists, Array effects, int frame) {
     var int col;
     
     while (col < w) {
-      do draw_col(col, dists[col], wall_types[col], effect_dists[col], effects[col]);
+      do draw_col(col, dists[col], wall_types[col], effect_dists[col], effects[col], frame);
 
       let col = col + 1;
     }
     return;
   }
 
-  method void draw_col(int col, int dist, int wall_type, int effect_dist, int effect) {
+  method void draw_col(int col, int dist, int wall_type, int effect_dist, int effect, int frame) {
     var int pixrow;  // memory address of the "pixel" that's actually 16 pixels wide
     var int rows;
     var int height;  // actually, distance from top of screen
@@ -121,9 +121,9 @@ class Display {
           let color_wall = 0;
           let color_wall_alt = 0;
         }
-        if (wall_type = 5) {
-          let color_wall = 21845;
-          let color_wall_alt = ~21845;
+        if (wall_type = 5) {  // door
+          let color_wall = frame;
+          let color_wall_alt = frame;
         }
       }
     }
